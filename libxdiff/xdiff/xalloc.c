@@ -32,9 +32,15 @@ xdl_set_allocator(memallocator_t const *malt)
 }
 
 void *
-xdl_malloc(unsigned int size)
+xdl_malloc(size_t size)
 {
-	return xmalt.malloc ? xmalt.malloc(xmalt.priv, size) : NULL;
+	if (xmalt.malloc) {
+		void *ret = xmalt.malloc(xmalt.priv, size);
+		if (ret)
+			memset(ret, 0, size);
+		return ret;
+	}
+	return malloc(size);
 }
 
 void
@@ -42,10 +48,13 @@ xdl_free(void *ptr)
 {
 	if (xmalt.free)
 		xmalt.free(xmalt.priv, ptr);
+	else
+		free(ptr);
 }
 
 void *
-xdl_realloc(void *ptr, unsigned int size)
+xdl_realloc(void *ptr, size_t size)
 {
-	return xmalt.realloc ? xmalt.realloc(xmalt.priv, ptr, size) : NULL;
+	return xmalt.realloc ? xmalt.realloc(xmalt.priv, ptr, size)
+			     : realloc(ptr, size);
 }

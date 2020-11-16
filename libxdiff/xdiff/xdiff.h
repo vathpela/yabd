@@ -54,9 +54,9 @@ extern "C" {
 
 LIBXDIFF_EXPORT typedef struct s_memallocator {
 	void *priv;
-	void *(*malloc)(void *, unsigned int);
+	void *(*malloc)(void *, size_t);
 	void (*free)(void *, void *);
-	void *(*realloc)(void *, void *, unsigned int);
+	void *(*realloc)(void *, void *, size_t);
 } memallocator_t;
 
 LIBXDIFF_EXPORT typedef struct s_mmblock {
@@ -96,9 +96,9 @@ LIBXDIFF_EXPORT typedef struct s_bdiffparam {
 } bdiffparam_t;
 
 LIBXDIFF_EXPORT int xdl_set_allocator(memallocator_t const *malt);
-LIBXDIFF_EXPORT void *xdl_malloc(unsigned int size);
+LIBXDIFF_EXPORT void *xdl_malloc(size_t size);
 LIBXDIFF_EXPORT void xdl_free(void *ptr);
-LIBXDIFF_EXPORT void *xdl_realloc(void *ptr, unsigned int size);
+LIBXDIFF_EXPORT void *xdl_realloc(void *ptr, size_t size);
 
 LIBXDIFF_EXPORT int xdl_init_mmfile(mmfile_t *mmf, long bsize,
                                     unsigned long flags);
