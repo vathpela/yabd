@@ -144,5 +144,4 @@ LIBXDIFF_EXPORT int xdl_bpatch_multi(mmbuffer_t *base, mmbuffer_t *mbpch, int n,
 #ifdef __cplusplus
 }
 #endif /* #ifdef __cplusplus */
-
 #endif /* #if !defined(XDIFF_H) */
