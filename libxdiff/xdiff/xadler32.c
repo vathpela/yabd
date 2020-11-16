@@ -46,12 +46,12 @@
 	DO8(buf, 0); \
 	DO8(buf, 8);
 
-unsigned long
-xdl_adler32(unsigned long adler, unsigned char const *buf, unsigned int len)
+uint32_t
+xdl_adler32(uint32_t adler, const unsigned char *buf, size_t len)
 {
 	int k;
-	unsigned long s1 = adler & 0xffff;
-	unsigned long s2 = (adler >> 16) & 0xffff;
+	uint32_t s1 = adler & 0xffff;
+	uint32_t s2 = (adler >> 16) & 0xffff;
 
 	if (!buf)
 		return 1;

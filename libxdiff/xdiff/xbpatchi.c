@@ -46,7 +46,7 @@ int
 xdl_bpatch(mmfile_t *mmf, mmfile_t *mmfp, xdemitcb_t *ecb)
 {
 	long size, off, csize, osize;
-	unsigned long fp, ofp;
+	uint32_t fp, ofp;
 	char const *blk;
 	unsigned char const *data, *top;
 	mmbuffer_t mb;
@@ -110,10 +110,10 @@ xdl_bpatch(mmfile_t *mmf, mmfile_t *mmfp, xdemitcb_t *ecb)
 	return 0;
 }
 
-static unsigned long
+static uint32_t
 xdl_mmob_adler32(mmoffbuffer_t *obf, int n)
 {
-	unsigned long ha;
+	uint32_t ha;
 
 	for (ha = 0; n > 0; n--, obf++)
 		ha = xdl_adler32(ha, (unsigned char const *)obf->ptr,
@@ -174,7 +174,7 @@ xdl_bmerge(mmoffbuffer_t *obf, int n, mmbuffer_t *mbfp, mmoffbuffer_t **probf,
 {
 	int i, aobf, nobf;
 	long ooff, off, csize;
-	unsigned long fp, ofp;
+	uint32_t fp, ofp;
 	unsigned char const *data, *top;
 	mmoffbuffer_t *robf, *cobf;
 

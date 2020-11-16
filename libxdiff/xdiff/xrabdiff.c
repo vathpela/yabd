@@ -279,7 +279,7 @@ int
 xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb)
 {
 	long i, cpos, size;
-	unsigned long fp;
+	uint32_t fp;
 	xrabcpyi_t *rcpy;
 	xrabctx_t ctx;
 	xrabcpyi_arena_t aca;

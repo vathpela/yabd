@@ -98,25 +98,25 @@ xdl_free_bdfile(bdfile_t *bdf)
 	xdl_cha_free(&bdf->cha);
 }
 
-unsigned long
+uint32_t
 xdl_mmb_adler32(mmbuffer_t *mmb)
 {
-	return mmb->size ? xdl_adler32(0, (unsigned char const *)mmb->ptr,
+	return mmb->size ? xdl_adler32(0, (const unsigned char *)mmb->ptr,
 	                               mmb->size)
 			 : 0;
 }
 
-unsigned long
+uint32_t
 xdl_mmf_adler32(mmfile_t *mmf)
 {
-	unsigned long fp = 0;
+	uint32_t fp = 0;
 	long size;
 	char const *blk;
 
-	if ((blk = (char const *)xdl_mmfile_first(mmf, &size)) != NULL) {
+	if ((blk = (const char *)xdl_mmfile_first(mmf, &size)) != NULL) {
 		do {
-			fp = xdl_adler32(fp, (unsigned char const *)blk, size);
-		} while ((blk = (char const *)xdl_mmfile_next(mmf, &size)) !=
+			fp = xdl_adler32(fp, (const unsigned char *)blk, size);
+		} while ((blk = (const char *)xdl_mmfile_next(mmf, &size)) !=
 		         NULL);
 	}
 	return fp;
@@ -127,7 +127,7 @@ xdl_bdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, bdiffparam_t const *bdp,
              xdemitcb_t *ecb)
 {
 	long i, rsize, size, bsize, csize, msize, moff = 0;
-	unsigned long fp;
+	uint32_t fp;
 	char const *blk, *base, *data, *top, *ptr1, *ptr2;
 	bdrecord_t *brec;
 	bdfile_t bdf;
