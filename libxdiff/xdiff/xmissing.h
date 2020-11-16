@@ -28,23 +28,23 @@
 #endif /* #if !defined(CHAR_BIT) */
 
 #if !defined(HAVE_MEMCHR)
-void *memchr(void const *p, int c, long n);
+void *memchr(const void *p, int c, size_t n);
 #endif /* #if !defined(HAVE_MEMCHR) */
 
 #if !defined(HAVE_MEMCMP)
-int memcmp(void const *p1, void const *p2, long n);
+int memcmp(const void *p1, const void *p2, size_t n);
 #endif /* #if !defined(HAVE_MEMCMP) */
 
 #if !defined(HAVE_MEMCPY)
-void *memcpy(void *d, void const *s, long n);
+void *memcpy(void *d, const void *s, size_t n);
 #endif /* #if !defined(HAVE_MEMCPY) */
 
 #if !defined(HAVE_MEMSET)
-void *memset(void *d, int c, long n);
+void *memset(void *d, int c, size_t n);
 #endif /* #if !defined(HAVE_MEMSET) */
 
 #if !defined(HAVE_STRLEN)
-long strlen(char const *s);
+size_t strlen(char const *s);
 #endif /* #if !defined(HAVE_STRLEN) */
 
 #endif /* #if !defined(XMISSING_H) */

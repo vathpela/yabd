@@ -25,13 +25,13 @@
 #if !defined(HAVE_MEMCHR)
 
 void *
-memchr(void const *p, int c, long n)
+memchr(const void *p, int c, size_t n)
 {
-	char const *pc = p;
+	const char *pc = p;
 
 	for (; n; n--, pc++)
 		if (*pc == (char)c)
-			return pc;
+			return (void *)pc;
 	return NULL;
 }
 
@@ -40,7 +40,7 @@ memchr(void const *p, int c, long n)
 #if !defined(HAVE_MEMCMP)
 
 int
-memcmp(void const *p1, void const *p2, long n)
+memcmp(const void *p1, const void *p2, size_t n)
 {
 	char const *pc1 = p1, *pc2 = p2;
 
@@ -55,7 +55,7 @@ memcmp(void const *p1, void const *p2, long n)
 #if !defined(HAVE_MEMCPY)
 
 void *
-memcpy(void *d, void const *s, long n)
+memcpy(void *d, const void *s, size_t n)
 {
 	char *dc = d;
 	char const *sc = s;
@@ -70,7 +70,7 @@ memcpy(void *d, void const *s, long n)
 #if !defined(HAVE_MEMSET)
 
 void *
-memset(void *d, int c, long n)
+memset(void *d, int c, size_t n)
 {
 	char *dc = d;
 
@@ -83,7 +83,7 @@ memset(void *d, int c, long n)
 
 #if !defined(HAVE_STRLEN)
 
-long
+size_t
 strlen(char const *s)
 {
 	char const *tmp;
