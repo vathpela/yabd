@@ -35,6 +35,28 @@
 #include <stdio.h>
 #endif /* #if defined(HAVE_STDIO_H) */
 
+#if defined(HAVE_INTTYPES_H)
+#include <inttypes.h>
+#endif
+
+#if defined(HAVE_STDINT_H)
+#include <stdint.h>
+#else
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef signed short int16_t;
+typedef unsigned short uint16_t;
+typedef signed int int32_t;
+typedef unsigned int uint32_t;
+#if __SIZEOF_LONG__ == 4
+typedef signed long long int64_t;
+typedef unsigned long long uint64_t;
+#else
+typedef signed long int64_t;
+typedef unsigned long uint64_t;
+#endif
+#endif
+
 #if defined(HAVE_STDLIB_H)
 #include <stdlib.h>
 #endif /* #if defined(HAVE_STDLIB_H) */
