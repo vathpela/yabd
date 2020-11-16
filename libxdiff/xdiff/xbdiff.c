@@ -110,7 +110,7 @@ uint32_t
 xdl_mmf_adler32(mmfile_t *mmf)
 {
 	uint32_t fp = 0;
-	long size;
+	size_t size;
 	char const *blk;
 
 	if ((blk = (const char *)xdl_mmfile_first(mmf, &size)) != NULL) {
@@ -275,14 +275,14 @@ xdl_bdiff(mmfile_t *mmf1, mmfile_t *mmf2, bdiffparam_t const *bdp,
 	return xdl_bdiff_mb(&mmb1, &mmb2, bdp, ecb);
 }
 
-long
+size_t
 xdl_bdiff_tgsize(mmfile_t *mmfp)
 {
-	long tgsize = 0, size, off, csize;
-	char const *blk;
-	unsigned char const *data, *top;
+	size_t tgsize = 0, size, off, csize;
+	const char *blk;
+	const unsigned char *data, *top;
 
-	if ((blk = (char const *)xdl_mmfile_first(mmfp, &size)) == NULL ||
+	if ((blk = (const char *)xdl_mmfile_first(mmfp, &size)) == NULL ||
 	    size < XDL_BPATCH_HDR_SIZE) {
 		return -1;
 	}

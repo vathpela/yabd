@@ -30,22 +30,22 @@ typedef struct s_xdlclass {
 	struct s_xdlclass *next;
 	unsigned long ha;
 	char const *line;
-	long size;
-	long idx;
+	size_t size;
+	size_t idx;
 } xdlclass_t;
 
 typedef struct s_xdlclassifier {
 	unsigned int hbits;
-	long hsize;
+	size_t hsize;
 	xdlclass_t **rchash;
 	chastore_t ncha;
-	long count;
+	size_t count;
 } xdlclassifier_t;
 
 static int
-xdl_init_classifier(xdlclassifier_t *cf, long size)
+xdl_init_classifier(xdlclassifier_t *cf, size_t size)
 {
-	long i;
+	size_t i;
 
 	cf->hbits = xdl_hashbits((unsigned int)size);
 	cf->hsize = 1 << cf->hbits;
@@ -77,7 +77,7 @@ static int
 xdl_classify_record(xdlclassifier_t *cf, xrecord_t **rhash, unsigned int hbits,
                     xrecord_t *rec)
 {
-	long hi;
+	size_t hi;
 	char const *line;
 	xdlclass_t *rcrec;
 
@@ -110,11 +110,11 @@ xdl_classify_record(xdlclassifier_t *cf, xrecord_t **rhash, unsigned int hbits,
 }
 
 static int
-xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
+xdl_prepare_ctx(mmfile_t *mf, size_t narec, xpparam_t const *xpp,
                 xdlclassifier_t *cf, xdfile_t *xdf)
 {
 	unsigned int hbits;
-	long i, nrec, hsize, bsize;
+	size_t i, nrec, hsize, bsize;
 	unsigned long hav;
 	char const *blk, *cur, *top, *prev;
 	xrecord_t *crec;
@@ -122,7 +122,7 @@ xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
 	xrecord_t **rhash;
 	unsigned long *ha;
 	char *rchg;
-	long *rindex;
+	size_t *rindex;
 
 	if (xdl_cha_init(&xdf->rcha, sizeof(xrecord_t), narec / 4 + 1) < 0) {
 		return -1;
@@ -192,7 +192,7 @@ xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
 	}
 	memset(rchg, 0, nrec + 2);
 
-	if (!(rindex = (long *)xdl_malloc((nrec + 1) * sizeof(long)))) {
+	if (!(rindex = xdl_malloc((nrec + 1) * sizeof(long)))) {
 		xdl_free(rchg);
 		xdl_free(rhash);
 		xdl_free(recs);
@@ -301,7 +301,7 @@ xdl_clean_mmatch(char const *dis, long i, long s, long e)
 static int
 xdl_cleanup_records(xdfile_t *xdf1, xdfile_t *xdf2)
 {
-	long i, nm, rhi, nreff, mlim;
+	size_t i, nm, rhi, nreff, mlim;
 	unsigned long hav;
 	xrecord_t **recs;
 	xrecord_t *rec;

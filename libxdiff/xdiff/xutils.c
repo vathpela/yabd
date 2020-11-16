@@ -24,10 +24,10 @@
 
 #define XDL_GUESS_NLINES 256
 
-long
-xdl_bogosqrt(long n)
+uint32_t
+xdl_bogosqrt(uint32_t n)
 {
-	long i;
+	uint32_t i;
 
 	/*
 	 * Classical integer square root approximation using shifts.
@@ -39,7 +39,7 @@ xdl_bogosqrt(long n)
 }
 
 int
-xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
+xdl_emit_diffrec(const char *rec, size_t size, const char *pre, size_t psize,
                  xdemitcb_t *ecb)
 {
 	int i = 2;
@@ -62,7 +62,7 @@ xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 }
 
 int
-xdl_init_mmfile(mmfile_t *mmf, long bsize, unsigned long flags)
+xdl_init_mmfile(mmfile_t *mmf, size_t bsize, uint32_t flags)
 {
 	mmf->flags = flags;
 	mmf->head = mmf->tail = NULL;
@@ -92,27 +92,27 @@ xdl_mmfile_iscompact(mmfile_t *mmf)
 }
 
 int
-xdl_seek_mmfile(mmfile_t *mmf, long off)
+xdl_seek_mmfile(mmfile_t *mmf, size_t pos)
 {
-	long bsize;
+	size_t bsize;
 
 	if (xdl_mmfile_first(mmf, &bsize)) {
 		do {
-			if (off < bsize) {
-				mmf->rpos = off;
+			if (pos < bsize) {
+				mmf->rpos = pos;
 				return 0;
 			}
-			off -= bsize;
+			pos -= bsize;
 		} while (xdl_mmfile_next(mmf, &bsize));
 	}
 
 	return -1;
 }
 
-long
-xdl_read_mmfile(mmfile_t *mmf, void *data, long size)
+ssize_t
+xdl_read_mmfile(mmfile_t *mmf, void *data, size_t size)
 {
-	long rsize, csize;
+	size_t rsize, csize;
 	char *ptr = data;
 	mmblock_t *rcur;
 
@@ -132,10 +132,10 @@ xdl_read_mmfile(mmfile_t *mmf, void *data, long size)
 	return rsize;
 }
 
-long
-xdl_write_mmfile(mmfile_t *mmf, void const *data, long size)
+ssize_t
+xdl_write_mmfile(mmfile_t *mmf, void const *data, size_t size)
 {
-	long wsize, bsize, csize;
+	size_t wsize, bsize, csize;
 	mmblock_t *wcur;
 
 	for (wsize = 0; wsize < size;) {
@@ -163,7 +163,7 @@ xdl_write_mmfile(mmfile_t *mmf, void const *data, long size)
 			mmf->wcur = wcur;
 		}
 		csize = XDL_MIN(size - wsize, wcur->bsize - wcur->size);
-		memcpy(wcur->ptr + wcur->size, (char const *)data + wsize,
+		memcpy(wcur->ptr + wcur->size, (const char *)data + wsize,
 		       csize);
 		wsize += csize;
 		wcur->size += csize;
@@ -173,11 +173,11 @@ xdl_write_mmfile(mmfile_t *mmf, void const *data, long size)
 	return size;
 }
 
-long
-xdl_writem_mmfile(mmfile_t *mmf, mmbuffer_t *mb, int nbuf)
+ssize_t
+xdl_writem_mmfile(mmfile_t *mmf, mmbuffer_t *mb, size_t nbuf)
 {
-	int i;
-	long size;
+	size_t i;
+	size_t size;
 	char *data;
 
 	for (i = 0, size = 0; i < nbuf; i++)
@@ -193,7 +193,7 @@ xdl_writem_mmfile(mmfile_t *mmf, mmbuffer_t *mb, int nbuf)
 }
 
 void *
-xdl_mmfile_writeallocate(mmfile_t *mmf, long size)
+xdl_mmfile_writeallocate(mmfile_t *mmf, size_t size)
 {
 	long bsize;
 	mmblock_t *wcur;
@@ -226,7 +226,7 @@ xdl_mmfile_writeallocate(mmfile_t *mmf, long size)
 }
 
 long
-xdl_mmfile_ptradd(mmfile_t *mmf, char *ptr, long size, unsigned long flags)
+xdl_mmfile_ptradd(mmfile_t *mmf, char *ptr, size_t size, uint32_t flags)
 {
 	mmblock_t *wcur;
 
@@ -249,10 +249,10 @@ xdl_mmfile_ptradd(mmfile_t *mmf, char *ptr, long size, unsigned long flags)
 	return size;
 }
 
-long
-xdl_copy_mmfile(mmfile_t *mmf, long size, xdemitcb_t *ecb)
+size_t
+xdl_copy_mmfile(mmfile_t *mmf, size_t size, xdemitcb_t *ecb)
 {
-	long rsize, csize;
+	size_t rsize, csize;
 	mmblock_t *rcur;
 	mmbuffer_t mb;
 
@@ -276,7 +276,7 @@ xdl_copy_mmfile(mmfile_t *mmf, long size, xdemitcb_t *ecb)
 }
 
 void *
-xdl_mmfile_first(mmfile_t *mmf, long *size)
+xdl_mmfile_first(mmfile_t *mmf, size_t *size)
 {
 	if (!(mmf->rcur = mmf->head))
 		return NULL;
@@ -287,7 +287,7 @@ xdl_mmfile_first(mmfile_t *mmf, long *size)
 }
 
 void *
-xdl_mmfile_next(mmfile_t *mmf, long *size)
+xdl_mmfile_next(mmfile_t *mmf, size_t *size)
 {
 	if (!mmf->rcur || !(mmf->rcur = mmf->rcur->next))
 		return NULL;
@@ -307,9 +307,9 @@ int
 xdl_mmfile_cmp(mmfile_t *mmf1, mmfile_t *mmf2)
 {
 	int cres;
-	long size, bsize1, bsize2, size1, size2;
-	char const *blk1, *cur1, *top1;
-	char const *blk2, *cur2, *top2;
+	size_t size, bsize1, bsize2, size1, size2;
+	const char *blk1, *cur1, *top1;
+	const char *blk2, *cur2, *top2;
 
 	if ((cur1 = blk1 = xdl_mmfile_first(mmf1, &bsize1)) != NULL)
 		top1 = blk1 + bsize1;
@@ -351,12 +351,11 @@ xdl_mmfile_cmp(mmfile_t *mmf1, mmfile_t *mmf2)
 }
 
 int
-xdl_mmfile_compact(mmfile_t *mmfo, mmfile_t *mmfc, long bsize,
-                   unsigned long flags)
+xdl_mmfile_compact(mmfile_t *mmfo, mmfile_t *mmfc, size_t bsize, uint32_t flags)
 {
-	long fsize = xdl_mmfile_size(mmfo), size;
+	size_t fsize = xdl_mmfile_size(mmfo), size;
 	char *data;
-	char const *blk;
+	const char *blk;
 
 	if (xdl_init_mmfile(mmfc, bsize, flags) < 0) {
 		return -1;
@@ -365,11 +364,11 @@ xdl_mmfile_compact(mmfile_t *mmfo, mmfile_t *mmfc, long bsize,
 		xdl_free_mmfile(mmfc);
 		return -1;
 	}
-	if ((blk = (char const *)xdl_mmfile_first(mmfo, &size)) != NULL) {
+	if ((blk = (const char *)xdl_mmfile_first(mmfo, &size)) != NULL) {
 		do {
 			memcpy(data, blk, size);
 			data += size;
-		} while ((blk = (char const *)xdl_mmfile_next(mmfo, &size)) !=
+		} while ((blk = (const char *)xdl_mmfile_next(mmfo, &size)) !=
 		         NULL);
 	}
 
@@ -377,7 +376,7 @@ xdl_mmfile_compact(mmfile_t *mmfo, mmfile_t *mmfc, long bsize,
 }
 
 int
-xdl_mmfile_outf(void *priv, mmbuffer_t *mb, int nbuf)
+xdl_mmfile_outf(void *priv, mmbuffer_t *mb, size_t nbuf)
 {
 	mmfile_t *mmf = priv;
 
@@ -389,7 +388,7 @@ xdl_mmfile_outf(void *priv, mmbuffer_t *mb, int nbuf)
 }
 
 int
-xdl_cha_init(chastore_t *cha, long isize, long icount)
+xdl_cha_init(chastore_t *cha, size_t isize, size_t icount)
 {
 	cha->head = cha->tail = NULL;
 	cha->isize = isize;
@@ -468,11 +467,11 @@ xdl_cha_next(chastore_t *cha)
 	return (char *)sncur + sizeof(chanode_t) + cha->scurr;
 }
 
-long
+size_t
 xdl_guess_lines(mmfile_t *mf)
 {
-	long nl = 0, size, tsize = 0;
-	char const *data, *cur, *top;
+	size_t nl = 0, size, tsize = 0;
+	const char *data, *cur, *top;
 
 	if ((cur = data = xdl_mmfile_first(mf, &size)) != NULL) {
 		for (top = data + size; nl < XDL_GUESS_NLINES;) {
@@ -498,10 +497,10 @@ xdl_guess_lines(mmfile_t *mf)
 }
 
 unsigned long
-xdl_hash_record(char const **data, char const *top)
+xdl_hash_record(const char **data, const char *top)
 {
 	unsigned long ha = 5381;
-	char const *ptr = *data;
+	const char *ptr = *data;
 
 	for (; ptr < top && *ptr != '\n'; ptr++) {
 		ha += (ha << 5);
@@ -513,7 +512,7 @@ xdl_hash_record(char const **data, char const *top)
 }
 
 unsigned int
-xdl_hashbits(unsigned int size)
+xdl_hashbits(size_t size)
 {
 	unsigned int val = 1, bits = 0;
 
@@ -548,10 +547,10 @@ xdl_num_out(char *out, long val)
 }
 
 long
-xdl_atol(char const *str, char const **next)
+xdl_atol(const char *str, const char **next)
 {
 	long val, base;
-	char const *top;
+	const char *top;
 
 	for (top = str; XDL_ISDIGIT(*top); top++)
 		;
@@ -563,7 +562,7 @@ xdl_atol(char const *str, char const **next)
 }
 
 int
-xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2, xdemitcb_t *ecb)
+xdl_emit_hunk_hdr(size_t s1, size_t c1, size_t s2, size_t c2, xdemitcb_t *ecb)
 {
 	int nb = 0;
 	mmbuffer_t mb;

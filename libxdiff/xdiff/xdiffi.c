@@ -258,10 +258,11 @@ xdl_split(unsigned long const *ha1, long off1, long lim1,
  * is done in the two boundary reaching checks.
  */
 int
-xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1, diffdata_t *dd2, long off2,
-             long lim2, long *kvdf, long *kvdb, int need_min, xdalgoenv_t *xenv)
+xdl_recs_cmp(diffdata_t *dd1, size_t off1, size_t lim1, diffdata_t *dd2,
+             size_t off2, size_t lim2, long *kvdf, long *kvdb, int need_min,
+             xdalgoenv_t *xenv)
 {
-	unsigned long const *ha1 = dd1->ha, *ha2 = dd2->ha;
+	const unsigned long *ha1 = dd1->ha, *ha2 = dd2->ha;
 
 	/*
 	 * Shrink the box by walking through each diagonal snake (SW and NE).
@@ -279,13 +280,13 @@ xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1, diffdata_t *dd2, long off2,
 	 */
 	if (off1 == lim1) {
 		char *rchg2 = dd2->rchg;
-		long *rindex2 = dd2->rindex;
+		size_t *rindex2 = dd2->rindex;
 
 		for (; off2 < lim2; off2++)
 			rchg2[rindex2[off2]] = 1;
 	} else if (off2 == lim2) {
 		char *rchg1 = dd1->rchg;
-		long *rindex1 = dd1->rindex;
+		size_t *rindex1 = dd1->rindex;
 
 		for (; off1 < lim1; off1++)
 			rchg1[rindex1[off1]] = 1;
@@ -316,9 +317,9 @@ xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1, diffdata_t *dd2, long off2,
 }
 
 int
-xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdfenv_t *xe)
+xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, const xpparam_t *xpp, xdfenv_t *xe)
 {
-	long ndiags;
+	size_t ndiags;
 	long *kvd, *kvdf, *kvdb;
 	xdalgoenv_t xenv;
 	diffdata_t dd1, dd2;

@@ -30,7 +30,7 @@ typedef struct s_mmoffbuffer {
 } mmoffbuffer_t;
 
 static int
-xdl_copy_range(mmfile_t *mmf, long off, long size, xdemitcb_t *ecb)
+xdl_copy_range(mmfile_t *mmf, size_t off, size_t size, xdemitcb_t *ecb)
 {
 	if (xdl_seek_mmfile(mmf, off) < 0) {
 		return -1;
@@ -45,7 +45,7 @@ xdl_copy_range(mmfile_t *mmf, long off, long size, xdemitcb_t *ecb)
 int
 xdl_bpatch(mmfile_t *mmf, mmfile_t *mmfp, xdemitcb_t *ecb)
 {
-	long size, off, csize, osize;
+	size_t size, off, csize, osize;
 	uint32_t fp, ofp;
 	char const *blk;
 	unsigned char const *data, *top;

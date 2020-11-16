@@ -25,34 +25,34 @@
 
 typedef struct s_chanode {
 	struct s_chanode *next;
-	long icurr;
+	size_t icurr;
 } chanode_t;
 
 typedef struct s_chastore {
 	chanode_t *head, *tail;
-	long isize, nsize;
+	size_t isize, nsize;
 	chanode_t *ancur;
 	chanode_t *sncur;
-	long scurr;
+	size_t scurr;
 } chastore_t;
 
 typedef struct s_xrecord {
 	struct s_xrecord *next;
-	char const *ptr;
-	long size;
+	const char *ptr;
+	size_t size;
 	unsigned long ha;
 } xrecord_t;
 
 typedef struct s_xdfile {
 	chastore_t rcha;
-	long nrec;
-	unsigned int hbits;
+	size_t nrec;
+	size_t hbits;
 	xrecord_t **rhash;
-	long dstart, dend;
+	size_t dstart, dend;
 	xrecord_t **recs;
 	char *rchg;
-	long *rindex;
-	long nreff;
+	size_t *rindex;
+	size_t nreff;
 	unsigned long *ha;
 } xdfile_t;
 

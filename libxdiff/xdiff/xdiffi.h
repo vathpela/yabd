@@ -24,9 +24,9 @@
 #define XDIFFI_H
 
 typedef struct s_diffdata {
-	long nrec;
-	unsigned long const *ha;
-	long *rindex;
+	size_t nrec;
+	const unsigned long *ha;
+	size_t *rindex;
 	char *rchg;
 } diffdata_t;
 
@@ -42,8 +42,8 @@ typedef struct s_xdchange {
 	long chg1, chg2;
 } xdchange_t;
 
-int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1, diffdata_t *dd2,
-                 long off2, long lim2, long *kvdf, long *kvdb, int need_min,
+int xdl_recs_cmp(diffdata_t *dd1, size_t off1, size_t lim1, diffdata_t *dd2,
+                 size_t off2, size_t lim2, long *kvdf, long *kvdb, int need_min,
                  xdalgoenv_t *xenv);
 int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
                 xdfenv_t *xe);
