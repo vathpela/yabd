@@ -291,14 +291,13 @@ xdl_recs_cmp(diffdata_t *dd1, size_t off1, size_t lim1, diffdata_t *dd2,
 		for (; off1 < lim1; off1++)
 			rchg1[rindex1[off1]] = 1;
 	} else {
-		long ec;
 		xdpsplit_t spl;
 
 		/*
 		 * Divide ...
 		 */
-		if ((ec = xdl_split(ha1, off1, lim1, ha2, off2, lim2, kvdf,
-		                    kvdb, need_min, &spl, xenv)) < 0) {
+		if (xdl_split(ha1, off1, lim1, ha2, off2, lim2, kvdf, kvdb,
+		              need_min, &spl, xenv) < 0) {
 			return -1;
 		}
 

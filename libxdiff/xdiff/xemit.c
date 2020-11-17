@@ -64,7 +64,7 @@ int
 xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
               xdemitconf_t const *xecfg)
 {
-	long s1, s2, e1, e2, lctx;
+	size_t s1, s2, e1, e2, lctx;
 	xdchange_t *xch, *xche;
 
 	for (xch = xche = xscr; xch; xch = xche->next) {

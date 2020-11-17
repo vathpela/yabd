@@ -38,8 +38,8 @@ typedef struct s_xdalgoenv {
 
 typedef struct s_xdchange {
 	struct s_xdchange *next;
-	long i1, i2;
-	long chg1, chg2;
+	size_t i1, i2;
+	size_t chg1, chg2;
 } xdchange_t;
 
 int xdl_recs_cmp(diffdata_t *dd1, size_t off1, size_t lim1, diffdata_t *dd2,
