@@ -58,6 +58,8 @@ bindiff : $(wildcard *.c *.h iquote/%.h)
 clean :
 	@rm -vf $(BINTARGETS) $(wildcard *.C)
 
+include iquote/scan-build.mk
+
 .PHONY: clean all
 
 # vim:ft=make
