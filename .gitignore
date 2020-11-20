@@ -22,5 +22,6 @@
 bindiff
 core.*
 cov-int
+sbat*
 scan-results/
 vgcore.*
