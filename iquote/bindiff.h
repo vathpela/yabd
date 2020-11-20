@@ -7,8 +7,10 @@
 #ifndef BINDIFF_H_
 #define BINDIFF_H_
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -18,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/cdefs.h>
+#include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/uio.h>
 #include <sys/types.h>
