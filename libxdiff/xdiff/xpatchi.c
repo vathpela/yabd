@@ -22,12 +22,8 @@
 
 #include "xinclude.h"
 
-
-
 #define XDL_MAX_FUZZ 3
 #define XDL_MIN_SYNCLINES 4
-
-
 
 typedef struct s_recinfo {
 	char const *ptr;
@@ -60,9 +56,6 @@ typedef struct s_patch {
 	int fuzzies;
 } patch_t;
 
-
-
-
 static int xdl_load_hunk_info(char const *line, long size, hunkinfo_t *hki);
 static int xdl_init_recfile(mmfile_t *mf, int ispatch, recfile_t *rf);
 static void xdl_free_recfile(recfile_t *rf);
@@ -72,23 +65,25 @@ static void xdl_free_patch(patch_t *pch);
 static int xdl_load_hunk(patch_t *pch, long hkrec);
 static int xdl_first_hunk(patch_t *pch);
 static int xdl_next_hunk(patch_t *pch);
-static int xdl_line_match(patch_t *pch, const char *s, long ns, char const *m, long nm);
-static int xdl_hunk_match(recfile_t *rf, long irec, patch_t *pch, int mode, int fuzz);
+static int xdl_line_match(patch_t *pch, const char *s, long ns, char const *m,
+                          long nm);
+static int xdl_hunk_match(recfile_t *rf, long irec, patch_t *pch, int mode,
+                          int fuzz);
 static int xdl_find_hunk(recfile_t *rf, long ibase, patch_t *pch, int mode,
-			 int fuzz, long *hkpos, int *exact);
+                         int fuzz, long *hkpos, int *exact);
 static int xdl_emit_rfile_line(recfile_t *rf, long line, xdemitcb_t *ecb);
-static int xdl_flush_section(recfile_t *rf, long start, long top, xdemitcb_t *ecb);
+static int xdl_flush_section(recfile_t *rf, long start, long top,
+                             xdemitcb_t *ecb);
 static int xdl_apply_hunk(recfile_t *rf, long hkpos, patch_t *pch, int mode,
-			  long *ibase, xdemitcb_t *ecb);
+                          long *ibase, xdemitcb_t *ecb);
 static int xdl_reject_hunk(recfile_t *rf, patch_t *pch, int mode,
-			   xdemitcb_t *rjecb);
+                           xdemitcb_t *rjecb);
 static int xdl_process_hunk(recfile_t *rff, patch_t *pch, long *ibase, int mode,
-			    xdemitcb_t *ecb, xdemitcb_t *rjecb);
+                            xdemitcb_t *ecb, xdemitcb_t *rjecb);
 
-
-
-
-static int xdl_load_hunk_info(char const *line, long size, hunkinfo_t *hki) {
+static int
+xdl_load_hunk_info(char const *line, long size, hunkinfo_t *hki)
+{
 	char const *next;
 
 	/*
@@ -170,15 +165,15 @@ static int xdl_load_hunk_info(char const *line, long size, hunkinfo_t *hki) {
 	return 0;
 }
 
-
-static int xdl_init_recfile(mmfile_t *mf, int ispatch, recfile_t *rf) {
+static int
+xdl_init_recfile(mmfile_t *mf, int ispatch, recfile_t *rf)
+{
 	long narec, nrec, bsize;
 	recinfo_t *recs, *rrecs;
 	char const *blk, *cur, *top, *eol;
 
 	narec = xdl_guess_lines(mf);
-	if (!(recs = (recinfo_t *) xdl_malloc(narec * sizeof(recinfo_t)))) {
-
+	if (!(recs = (recinfo_t *)xdl_malloc(narec * sizeof(recinfo_t)))) {
 		return -1;
 	}
 	nrec = 0;
@@ -191,9 +186,9 @@ static int xdl_init_recfile(mmfile_t *mf, int ispatch, recfile_t *rf) {
 			}
 			if (nrec >= narec) {
 				narec *= 2;
-				if (!(rrecs = (recinfo_t *)
-				      xdl_realloc(recs, narec * sizeof(recinfo_t)))) {
-
+				if (!(rrecs = (recinfo_t *)xdl_realloc(
+					      recs,
+					      narec * sizeof(recinfo_t)))) {
 					xdl_free(recs);
 					return -1;
 				}
@@ -202,8 +197,9 @@ static int xdl_init_recfile(mmfile_t *mf, int ispatch, recfile_t *rf) {
 			recs[nrec].ptr = cur;
 			if (!(eol = memchr(cur, '\n', top - cur)))
 				eol = top - 1;
-			recs[nrec].size = (long) (eol - cur) + 1;
-			if (ispatch && *cur == '\\' && nrec > 0 && recs[nrec - 1].size > 0 &&
+			recs[nrec].size = (long)(eol - cur) + 1;
+			if (ispatch && *cur == '\\' && nrec > 0 &&
+			    recs[nrec - 1].size > 0 &&
 			    recs[nrec - 1].ptr[recs[nrec - 1].size - 1] == '\n')
 				recs[nrec - 1].size--;
 			else
@@ -218,15 +214,15 @@ static int xdl_init_recfile(mmfile_t *mf, int ispatch, recfile_t *rf) {
 	return 0;
 }
 
-
-static void xdl_free_recfile(recfile_t *rf) {
-
+static void
+xdl_free_recfile(recfile_t *rf)
+{
 	xdl_free(rf->recs);
 }
 
-
-static char const *xdl_recfile_get(recfile_t *rf, long irec, long *size) {
-
+static char const *
+xdl_recfile_get(recfile_t *rf, long irec, long *size)
+{
 	if (irec < 0 || irec >= rf->nrec)
 		return NULL;
 	*size = rf->recs[irec].size;
@@ -234,11 +230,10 @@ static char const *xdl_recfile_get(recfile_t *rf, long irec, long *size) {
 	return rf->recs[irec].ptr;
 }
 
-
-static int xdl_init_patch(mmfile_t *mf, long flags, patch_t *pch) {
-
+static int
+xdl_init_patch(mmfile_t *mf, long flags, patch_t *pch)
+{
 	if (xdl_init_recfile(mf, 1, &pch->rf) < 0) {
-
 		return -1;
 	}
 	pch->hkrec = 0;
@@ -250,14 +245,15 @@ static int xdl_init_patch(mmfile_t *mf, long flags, patch_t *pch) {
 	return 0;
 }
 
-
-static void xdl_free_patch(patch_t *pch) {
-
+static void
+xdl_free_patch(patch_t *pch)
+{
 	xdl_free_recfile(&pch->rf);
 }
 
-
-static int xdl_load_hunk(patch_t *pch, long hkrec) {
+static int
+xdl_load_hunk(patch_t *pch, long hkrec)
+{
 	long size, i, nb;
 	char const *line;
 
@@ -269,10 +265,10 @@ static int xdl_load_hunk(patch_t *pch, long hkrec) {
 			break;
 	}
 	if (xdl_load_hunk_info(line, size, &pch->hi) < 0) {
-
 		return -1;
 	}
-	pch->hi.cmn = pch->hi.radd = pch->hi.rdel = pch->hi.pctx = pch->hi.sctx = 0;
+	pch->hi.cmn = pch->hi.radd = pch->hi.rdel = pch->hi.pctx =
+		pch->hi.sctx = 0;
 	for (i = pch->hkrec + 1, nb = 0;
 	     (line = xdl_recfile_get(&pch->rf, i, &size)) != NULL; i++) {
 		if (*line == '@' || *line == '\n')
@@ -291,14 +287,12 @@ static int xdl_load_hunk(patch_t *pch, long hkrec) {
 			nb = 0;
 			pch->hi.rdel++;
 		} else {
-
 			return -1;
 		}
 	}
 	pch->hi.sctx = nb;
 	if (pch->hi.cmn + pch->hi.radd != pch->hi.c2 ||
 	    pch->hi.cmn + pch->hi.rdel != pch->hi.c1) {
-
 		return -1;
 	}
 	pch->hklen = i - pch->hkrec - 1;
@@ -306,43 +300,50 @@ static int xdl_load_hunk(patch_t *pch, long hkrec) {
 	return 1;
 }
 
-
-static int xdl_first_hunk(patch_t *pch) {
-
+static int
+xdl_first_hunk(patch_t *pch)
+{
 	return xdl_load_hunk(pch, 0);
 }
 
-
-static int xdl_next_hunk(patch_t *pch) {
-
+static int
+xdl_next_hunk(patch_t *pch)
+{
 	return xdl_load_hunk(pch, pch->hkrec + pch->hklen + 1);
 }
 
-
-static int xdl_line_match(patch_t *pch, const char *s, long ns, char const *m, long nm) {
-
-	for (; ns > 0 && (s[ns - 1] == '\r' || s[ns - 1] == '\n'); ns--);
-	for (; nm > 0 && (m[nm - 1] == '\r' || m[nm - 1] == '\n'); nm--);
+static int
+xdl_line_match(patch_t *pch, const char *s, long ns, char const *m, long nm)
+{
+	for (; ns > 0 && (s[ns - 1] == '\r' || s[ns - 1] == '\n'); ns--)
+		;
+	for (; nm > 0 && (m[nm - 1] == '\r' || m[nm - 1] == '\n'); nm--)
+		;
 	if (pch->flags & XDL_PATCH_IGNOREBSPACE) {
-		for (; ns > 0 && (*s == ' ' || *s == '\t'); ns--, s++);
-		for (; ns > 0 && (s[ns - 1] == ' ' || s[ns - 1] == '\t'); ns--);
-		for (; nm > 0 && (*m == ' ' || *m == '\t'); nm--, m++);
-		for (; nm > 0 && (m[nm - 1] == ' ' || m[nm - 1] == '\t'); nm--);
+		for (; ns > 0 && (*s == ' ' || *s == '\t'); ns--, s++)
+			;
+		for (; ns > 0 && (s[ns - 1] == ' ' || s[ns - 1] == '\t'); ns--)
+			;
+		for (; nm > 0 && (*m == ' ' || *m == '\t'); nm--, m++)
+			;
+		for (; nm > 0 && (m[nm - 1] == ' ' || m[nm - 1] == '\t'); nm--)
+			;
 	}
 
 	return ns == nm && memcmp(s, m, ns) == 0;
 }
 
-
-static int xdl_hunk_match(recfile_t *rf, long irec, patch_t *pch, int mode, int fuzz) {
+static int
+xdl_hunk_match(recfile_t *rf, long irec, patch_t *pch, int mode, int fuzz)
+{
 	long i, j, z, fsize, psize, ptop, pfuzz, sfuzz, misses;
 	char const *fline, *pline;
 
 	/*
 	 * Limit fuzz to not be greater than the prefix and suffix context.
 	 */
-	pfuzz = fuzz < pch->hi.pctx ? fuzz: pch->hi.pctx;
-	sfuzz = fuzz < pch->hi.sctx ? fuzz: pch->hi.sctx;
+	pfuzz = fuzz < pch->hi.pctx ? fuzz : pch->hi.pctx;
+	sfuzz = fuzz < pch->hi.sctx ? fuzz : pch->hi.sctx;
 
 	/*
 	 * First loop through the prefix fuzz area. In this loop we simply
@@ -350,7 +351,7 @@ static int xdl_hunk_match(recfile_t *rf, long irec, patch_t *pch, int mode, int 
 	 * some prefix context lines are missing.
 	 */
 	for (z = pfuzz, misses = 0, i = irec, j = pch->hkrec + 1,
-	     ptop = pch->hkrec + 1 + pch->hklen - sfuzz;
+	    ptop = pch->hkrec + 1 + pch->hklen - sfuzz;
 	     z > 0 && i < rf->nrec && j < ptop; i++, j++, z--) {
 		if (!(pline = xdl_recfile_get(&pch->rf, j, &psize)))
 			return 0;
@@ -398,14 +399,16 @@ static int xdl_hunk_match(recfile_t *rf, long irec, patch_t *pch, int mode, int 
 	return misses <= fuzz;
 }
 
-
-static int xdl_find_hunk(recfile_t *rf, long ibase, patch_t *pch, int mode,
-			 int fuzz, long *hkpos, int *exact) {
+static int
+xdl_find_hunk(recfile_t *rf, long ibase, patch_t *pch, int mode, int fuzz,
+              long *hkpos, int *exact)
+{
 	long hpos, hlen, i, j;
 	long pos[2];
 
-	hpos = mode == '-' ? pch->hi.s1: pch->hi.s2;
-	hlen = mode == '-' ? pch->hi.cmn + pch->hi.rdel: pch->hi.cmn + pch->hi.radd;
+	hpos = mode == '-' ? pch->hi.s1 : pch->hi.s2;
+	hlen = mode == '-' ? pch->hi.cmn + pch->hi.rdel
+			   : pch->hi.cmn + pch->hi.radd;
 	if (xdl_hunk_match(rf, hpos, pch, mode, fuzz)) {
 		*hkpos = hpos;
 		*exact = 1;
@@ -434,26 +437,26 @@ static int xdl_find_hunk(recfile_t *rf, long ibase, patch_t *pch, int mode,
 	return 0;
 }
 
-
-static int xdl_emit_rfile_line(recfile_t *rf, long line, xdemitcb_t *ecb) {
+static int
+xdl_emit_rfile_line(recfile_t *rf, long line, xdemitcb_t *ecb)
+{
 	mmbuffer_t mb;
 
-	if (!(mb.ptr = (char *) xdl_recfile_get(rf, line, &mb.size)) ||
+	if (!(mb.ptr = (char *)xdl_recfile_get(rf, line, &mb.size)) ||
 	    ecb->outf(ecb->priv, &mb, 1) < 0) {
-
 		return -1;
 	}
 
 	return 0;
 }
 
-
-static int xdl_flush_section(recfile_t *rf, long start, long top, xdemitcb_t *ecb) {
+static int
+xdl_flush_section(recfile_t *rf, long start, long top, xdemitcb_t *ecb)
+{
 	long i;
 
 	for (i = start; i <= top; i++) {
 		if (xdl_emit_rfile_line(rf, i, ecb) < 0) {
-
 			return -1;
 		}
 	}
@@ -461,9 +464,10 @@ static int xdl_flush_section(recfile_t *rf, long start, long top, xdemitcb_t *ec
 	return 0;
 }
 
-
-static int xdl_apply_hunk(recfile_t *rf, long hkpos, patch_t *pch, int mode,
-			  long *ibase, xdemitcb_t *ecb) {
+static int
+xdl_apply_hunk(recfile_t *rf, long hkpos, patch_t *pch, int mode, long *ibase,
+               xdemitcb_t *ecb)
+{
 	long j, psize, ptop;
 	char const *pline;
 	mmbuffer_t mb;
@@ -478,27 +482,24 @@ static int xdl_apply_hunk(recfile_t *rf, long hkpos, patch_t *pch, int mode,
 	 */
 	hkpos += pch->hi.pctx;
 	if (xdl_flush_section(rf, *ibase, hkpos - 1, ecb) < 0) {
-
 		return -1;
 	}
 	*ibase = hkpos;
 	for (j = pch->hkrec + 1 + pch->hi.pctx,
-	     ptop = pch->hkrec + 1 + pch->hklen - pch->hi.sctx; j < ptop; j++) {
+	    ptop = pch->hkrec + 1 + pch->hklen - pch->hi.sctx;
+	     j < ptop; j++) {
 		if (!(pline = xdl_recfile_get(&pch->rf, j, &psize))) {
-
 			return -1;
 		}
 		if (*pline == ' ') {
 			if (xdl_emit_rfile_line(rf, *ibase, ecb) < 0) {
-
 				return -1;
 			}
 			(*ibase)++;
 		} else if (*pline != mode) {
-			mb.ptr = (char *) pline + 1;
+			mb.ptr = (char *)pline + 1;
 			mb.size = psize - 1;
 			if (ecb->outf(ecb->priv, &mb, 1) < 0) {
-
 				return -1;
 			}
 			pch->ps.adds++;
@@ -511,9 +512,9 @@ static int xdl_apply_hunk(recfile_t *rf, long hkpos, patch_t *pch, int mode,
 	return 0;
 }
 
-
-static int xdl_reject_hunk(recfile_t *rf, patch_t *pch, int mode,
-			   xdemitcb_t *rjecb) {
+static int
+xdl_reject_hunk(recfile_t *rf, patch_t *pch, int mode, xdemitcb_t *rjecb)
+{
 	long i, size, s1, s2, c1, c2;
 	char const *line, *pre;
 	mmbuffer_t mb;
@@ -531,7 +532,6 @@ static int xdl_reject_hunk(recfile_t *rf, patch_t *pch, int mode,
 	}
 	s1 += pch->ps.adds - pch->ps.dels;
 	if (xdl_emit_hunk_hdr(s1 + 1, c1, s2 + 1, c2, rjecb) < 0) {
-
 		return -1;
 	}
 	for (i = pch->hkrec + 1;
@@ -539,17 +539,15 @@ static int xdl_reject_hunk(recfile_t *rf, patch_t *pch, int mode,
 		if (*line == '@' || *line == '\n')
 			break;
 		if (mode == '-' || *line == ' ') {
-			mb.ptr = (char *) line;
+			mb.ptr = (char *)line;
 			mb.size = size;
 			if (rjecb->outf(rjecb->priv, &mb, 1) < 0) {
-
 				return -1;
 			}
 		} else {
-			pre = *line == '+' ? "-": "+";
-			if (xdl_emit_diffrec(line + 1, size - 1, pre, strlen(pre),
-					     rjecb) < 0) {
-
+			pre = *line == '+' ? "-" : "+";
+			if (xdl_emit_diffrec(line + 1, size - 1, pre,
+			                     strlen(pre), rjecb) < 0) {
 				return -1;
 			}
 		}
@@ -558,24 +556,25 @@ static int xdl_reject_hunk(recfile_t *rf, patch_t *pch, int mode,
 	return 0;
 }
 
-
-static int xdl_process_hunk(recfile_t *rff, patch_t *pch, long *ibase, int mode,
-			    xdemitcb_t *ecb, xdemitcb_t *rjecb) {
+static int
+xdl_process_hunk(recfile_t *rff, patch_t *pch, long *ibase, int mode,
+                 xdemitcb_t *ecb, xdemitcb_t *rjecb)
+{
 	int fuzz, exact, hlen, maxfuzz;
 	long hkpos;
 
-	hlen = mode == '-' ? pch->hi.cmn + pch->hi.rdel: pch->hi.cmn + pch->hi.radd;
+	hlen = mode == '-' ? pch->hi.cmn + pch->hi.rdel
+			   : pch->hi.cmn + pch->hi.radd;
 	maxfuzz = XDL_MAX_FUZZ;
 	if (hlen - maxfuzz < XDL_MIN_SYNCLINES)
 		maxfuzz = hlen - XDL_MIN_SYNCLINES;
 	if (maxfuzz < 0)
 		maxfuzz = 0;
 	for (fuzz = 0; fuzz <= maxfuzz; fuzz++) {
-		if (xdl_find_hunk(rff, *ibase, pch, mode, fuzz,
-				  &hkpos, &exact)) {
-			if (xdl_apply_hunk(rff, hkpos, pch, mode,
-					   ibase, ecb) < 0) {
-
+		if (xdl_find_hunk(rff, *ibase, pch, mode, fuzz, &hkpos,
+		                  &exact)) {
+			if (xdl_apply_hunk(rff, hkpos, pch, mode, ibase, ecb) <
+			    0) {
 				return -1;
 			}
 			if (!exact || fuzz)
@@ -585,27 +584,25 @@ static int xdl_process_hunk(recfile_t *rff, patch_t *pch, long *ibase, int mode,
 		}
 	}
 	if (xdl_reject_hunk(rff, pch, mode, rjecb) < 0) {
-
 		return -1;
 	}
 
 	return 0;
 }
 
-
-int xdl_patch(mmfile_t *mf, mmfile_t *mfp, int mode, xdemitcb_t *ecb,
-	      xdemitcb_t *rjecb) {
+int
+xdl_patch(mmfile_t *mf, mmfile_t *mfp, int mode, xdemitcb_t *ecb,
+          xdemitcb_t *rjecb)
+{
 	int hkres, exact;
 	long hkpos, ibase;
 	recfile_t rff;
 	patch_t pch;
 
 	if (xdl_init_recfile(mf, 0, &rff) < 0) {
-
 		return -1;
 	}
 	if (xdl_init_patch(mfp, mode & ~XDL_PATCH_MODEMASK, &pch) < 0) {
-
 		xdl_free_recfile(&rff);
 		return -1;
 	}
@@ -613,8 +610,8 @@ int xdl_patch(mmfile_t *mf, mmfile_t *mfp, int mode, xdemitcb_t *ecb,
 	ibase = 0;
 	if ((hkres = xdl_first_hunk(&pch)) > 0) {
 		do {
-			if (xdl_process_hunk(&rff, &pch, &ibase, mode,
-					     ecb, rjecb) < 0) {
+			if (xdl_process_hunk(&rff, &pch, &ibase, mode, ecb,
+			                     rjecb) < 0) {
 				xdl_free_patch(&pch);
 				xdl_free_recfile(&rff);
 				return -1;
@@ -622,13 +619,11 @@ int xdl_patch(mmfile_t *mf, mmfile_t *mfp, int mode, xdemitcb_t *ecb,
 		} while ((hkres = xdl_next_hunk(&pch)) > 0);
 	}
 	if (hkres < 0) {
-
 		xdl_free_patch(&pch);
 		xdl_free_recfile(&rff);
 		return -1;
 	}
 	if (xdl_flush_section(&rff, ibase, rff.nrec - 1, ecb) < 0) {
-
 		xdl_free_patch(&pch);
 		xdl_free_recfile(&rff);
 		return -1;
@@ -638,4 +633,3 @@ int xdl_patch(mmfile_t *mf, mmfile_t *mfp, int mode, xdemitcb_t *ecb,
 
 	return pch.fuzzies;
 }
-

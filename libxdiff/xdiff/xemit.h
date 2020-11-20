@@ -23,12 +23,7 @@
 #if !defined(XEMIT_H)
 #define XEMIT_H
 
-
-
 int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
-		  xdemitconf_t const *xecfg);
-
-
+                  xdemitconf_t const *xecfg);
 
 #endif /* #if !defined(XEMIT_H) */
-

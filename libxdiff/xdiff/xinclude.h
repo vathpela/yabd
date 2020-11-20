@@ -23,7 +23,6 @@
 #if !defined(XINCLUDE_H)
 #define XINCLUDE_H
 
-
 #if defined(HAVE_WINCONFIG_H)
 #include "winconfig.h"
 #endif /* #if defined(HAVE_CONFIG_H) */
@@ -52,8 +51,6 @@
 #include <limits.h>
 #endif /* #if defined(HAVE_LIMITS_H) */
 
-
-
 #include "xmacros.h"
 #include "xmissing.h"
 #include "xdiff.h"
@@ -65,7 +62,4 @@
 #include "xemit.h"
 #include "xbdiff.h"
 
-
-
 #endif /* #if !defined(XINCLUDE_H) */
-

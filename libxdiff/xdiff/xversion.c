@@ -22,6 +22,5 @@
 
 #include "xinclude.h"
 
-
-char libxdiff_version[] = "LibXDiff v" PACKAGE_VERSION " by Davide Libenzi <davide@xmailserver.org>";
-
+char libxdiff_version[] = "LibXDiff v" PACKAGE_VERSION
+			  " by Davide Libenzi <davide@xmailserver.org>";

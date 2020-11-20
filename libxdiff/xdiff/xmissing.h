@@ -23,12 +23,9 @@
 #if !defined(XMISSING_H)
 #define XMISSING_H
 
-
 #if !defined(CHAR_BIT)
 #define CHAR_BIT 8
 #endif /* #if !defined(CHAR_BIT) */
-
-
 
 #if !defined(HAVE_MEMCHR)
 void *memchr(void const *p, int c, long n);
@@ -50,7 +47,4 @@ void *memset(void *d, int c, long n);
 long strlen(char const *s);
 #endif /* #if !defined(HAVE_STRLEN) */
 
-
-
 #endif /* #if !defined(XMISSING_H) */
-

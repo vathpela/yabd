@@ -23,8 +23,6 @@
 #if !defined(XTYPES_H)
 #define XTYPES_H
 
-
-
 typedef struct s_chanode {
 	struct s_chanode *next;
 	long icurr;
@@ -62,7 +60,4 @@ typedef struct s_xdfenv {
 	xdfile_t xdf1, xdf2;
 } xdfenv_t;
 
-
-
 #endif /* #if !defined(XTYPES_H) */
-

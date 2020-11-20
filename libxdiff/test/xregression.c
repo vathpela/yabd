@@ -29,27 +29,27 @@
 #include "xdiff.h"
 #include "xtestutils.h"
 
-
-
-static void *wrap_malloc(void *priv, unsigned int size) {
-
+static void *
+wrap_malloc(void *priv, unsigned int size)
+{
 	return malloc(size);
 }
 
-
-static void wrap_free(void *priv, void *ptr) {
-
+static void
+wrap_free(void *priv, void *ptr)
+{
 	free(ptr);
 }
 
-
-static void *wrap_realloc(void *priv, void *ptr, unsigned int size) {
-
+static void *
+wrap_realloc(void *priv, void *ptr, unsigned int size)
+{
 	return realloc(ptr, size);
 }
 
-
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
 	int i, chmax = 64;
 	long size = 1024 * 100;
 	double rmod = 0.1;
@@ -88,45 +88,36 @@ int main(int argc, char *argv[]) {
 	for (i = 0;; i++) {
 		fprintf(stderr, "Running TEXT test : %d ... ", i);
 		if (xdlt_auto_regress(&xpp, &xecfg, size, rmod, chmax) < 0) {
-
 			fprintf(stderr, "FAIL\n");
 			break;
 		} else {
-
 			fprintf(stderr, "OK\n");
 		}
 
 		fprintf(stderr, "Running BIN  test : %d ... ", i);
 		if (xdlt_auto_binregress(&bdp, size, rmod, chmax) < 0) {
-
 			fprintf(stderr, "FAIL\n");
 			break;
 		} else {
-
 			fprintf(stderr, "OK\n");
 		}
 
 		fprintf(stderr, "Running RBIN  test : %d ... ", i);
 		if (xdlt_auto_rabinregress(size, rmod, chmax) < 0) {
-
 			fprintf(stderr, "FAIL\n");
 			break;
 		} else {
-
 			fprintf(stderr, "OK\n");
 		}
 
 		fprintf(stderr, "Running MBIN  test : %d ... ", i);
 		if (xdlt_auto_mbinregress(&bdp, size, rmod, chmax, 32) != 0) {
-
 			fprintf(stderr, "FAIL\n");
 			break;
 		} else {
-
 			fprintf(stderr, "OK\n");
 		}
 	}
 
 	return 0;
 }
-

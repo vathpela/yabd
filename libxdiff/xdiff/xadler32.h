@@ -23,12 +23,7 @@
 #if !defined(XADLER32_H)
 #define XADLER32_H
 
-
-
 unsigned long xdl_adler32(unsigned long adler, unsigned char const *buf,
-			  unsigned int len);
-
-
+                          unsigned int len);
 
 #endif /* #if !defined(XADLER32_H) */
-

@@ -52,21 +52,14 @@
 #include "xdiff.h"
 #include "xtestutils.h"
 
-
-
 #define XDLT_STD_BLKSIZE (1024 * 8)
 #define XDLT_MAX_LINE_SIZE 80
 
-
-
-
 static int xdlt_mmfile_outf(void *priv, mmbuffer_t *mb, int nbuf);
 
-
-
-
-
-int xdlt_dump_mmfile(char const *fname, mmfile_t *mmf) {
+int
+xdlt_dump_mmfile(char const *fname, mmfile_t *mmf)
+{
 	int fd;
 	long size;
 	char *blk;
@@ -76,14 +69,14 @@ int xdlt_dump_mmfile(char const *fname, mmfile_t *mmf) {
 		return -1;
 	}
 
-	if ((blk = (char *) xdl_mmfile_first(mmf, &size)) != NULL) {
+	if ((blk = (char *)xdl_mmfile_first(mmf, &size)) != NULL) {
 		do {
-			if (write(fd, blk, (size_t) size) != (size_t) size) {
+			if (write(fd, blk, (size_t)size) != (size_t)size) {
 				perror(fname);
 				close(fd);
 				return -1;
 			}
-		} while ((blk = (char *) xdl_mmfile_next(mmf, &size)) != NULL);
+		} while ((blk = (char *)xdl_mmfile_next(mmf, &size)) != NULL);
 	}
 
 	close(fd);
@@ -91,15 +84,15 @@ int xdlt_dump_mmfile(char const *fname, mmfile_t *mmf) {
 	return 0;
 }
 
-
-int xdlt_load_mmfile(char const *fname, mmfile_t *mf, int binmode) {
+int
+xdlt_load_mmfile(char const *fname, mmfile_t *mf, int binmode)
+{
 	char cc;
 	int fd;
 	long size;
 	char *blk;
 
 	if (xdl_init_mmfile(mf, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		return -1;
 	}
 	if ((fd = open(fname, O_RDONLY)) == -1) {
@@ -109,12 +102,12 @@ int xdlt_load_mmfile(char const *fname, mmfile_t *mf, int binmode) {
 	}
 	size = lseek(fd, 0, SEEK_END);
 	lseek(fd, 0, SEEK_SET);
-	if (!(blk = (char *) xdl_mmfile_writeallocate(mf, size))) {
+	if (!(blk = (char *)xdl_mmfile_writeallocate(mf, size))) {
 		xdl_free_mmfile(mf);
 		close(fd);
 		return -1;
 	}
-	if (read(fd, blk, (size_t) size) != (size_t) size) {
+	if (read(fd, blk, (size_t)size) != (size_t)size) {
 		perror(fname);
 		xdl_free_mmfile(mf);
 		close(fd);
@@ -125,31 +118,30 @@ int xdlt_load_mmfile(char const *fname, mmfile_t *mf, int binmode) {
 	return 0;
 }
 
-
-static int xdlt_mmfile_outf(void *priv, mmbuffer_t *mb, int nbuf) {
+static int
+xdlt_mmfile_outf(void *priv, mmbuffer_t *mb, int nbuf)
+{
 	mmfile_t *mmf = priv;
 
 	if (xdl_writem_mmfile(mmf, mb, nbuf) < 0) {
-
 		return -1;
 	}
 
 	return 0;
 }
 
-
-int xdlt_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
-		 xdemitconf_t const *xecfg, mmfile_t *mfp) {
+int
+xdlt_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
+             xdemitconf_t const *xecfg, mmfile_t *mfp)
+{
 	xdemitcb_t ecb;
 
 	if (xdl_init_mmfile(mfp, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		return -1;
 	}
 	ecb.priv = mfp;
 	ecb.outf = xdlt_mmfile_outf;
 	if (xdl_diff(mf1, mf2, xpp, xecfg, &ecb) < 0) {
-
 		xdl_free_mmfile(mfp);
 		return -1;
 	}
@@ -157,17 +149,16 @@ int xdlt_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	return 0;
 }
 
-
-int xdlt_do_patch(mmfile_t *mfo, mmfile_t *mfp, int mode, mmfile_t *mfr) {
+int
+xdlt_do_patch(mmfile_t *mfo, mmfile_t *mfp, int mode, mmfile_t *mfr)
+{
 	xdemitcb_t ecb, rjecb;
 	mmfile_t mmfrj;
 
 	if (xdl_init_mmfile(mfr, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		return -1;
 	}
 	if (xdl_init_mmfile(&mmfrj, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		xdl_free_mmfile(mfr);
 		return -1;
 	}
@@ -176,14 +167,12 @@ int xdlt_do_patch(mmfile_t *mfo, mmfile_t *mfp, int mode, mmfile_t *mfr) {
 	rjecb.priv = &mmfrj;
 	rjecb.outf = xdlt_mmfile_outf;
 	if (xdl_patch(mfo, mfp, mode, &ecb, &rjecb) < 0) {
-
 		xdl_free_mmfile(&mmfrj);
 		xdl_free_mmfile(mfr);
 		return -1;
 	}
 
 	if (mmfrj.fsize > 0) {
-
 #if 1
 		xdlt_dump_mmfile("xregr.orig", mfo);
 		xdlt_dump_mmfile("xregr.patch", mfp);
@@ -199,34 +188,30 @@ int xdlt_do_patch(mmfile_t *mfo, mmfile_t *mfp, int mode, mmfile_t *mfr) {
 	return 0;
 }
 
-
-int xdlt_do_regress(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
-		    xdemitconf_t const *xecfg) {
+int
+xdlt_do_regress(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
+                xdemitconf_t const *xecfg)
+{
 	mmfile_t mfp, mfr;
 
 	if (xdlt_do_diff(mf1, mf2, xpp, xecfg, &mfp) < 0) {
-
 		return -1;
 	}
 	if (xdlt_do_patch(mf1, &mfp, XDL_PATCH_NORMAL, &mfr) < 0) {
-
 		xdl_free_mmfile(&mfp);
 		return -1;
 	}
 	if (xdl_mmfile_cmp(&mfr, mf2)) {
-
 		xdl_free_mmfile(&mfr);
 		xdl_free_mmfile(&mfp);
 		return -1;
 	}
 	xdl_free_mmfile(&mfr);
 	if (xdlt_do_patch(mf2, &mfp, XDL_PATCH_REVERSE, &mfr) < 0) {
-
 		xdl_free_mmfile(&mfp);
 		return -1;
 	}
 	if (xdl_mmfile_cmp(&mfr, mf1)) {
-
 		xdl_free_mmfile(&mfr);
 		xdl_free_mmfile(&mfp);
 		return -1;
@@ -237,13 +222,13 @@ int xdlt_do_regress(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	return 0;
 }
 
-
-long xdlt_gen_line(char *buf, long msize) {
+long
+xdlt_gen_line(char *buf, long msize)
+{
 	long i, size;
-	static const char ab[] =
-		"zxcvbnmlkjhgfdsaqwertyuiop"
-		"ZXCVBNMLKJHGFDSAQWERTYUIOP"
-		"0123456789                ";
+	static const char ab[] = "zxcvbnmlkjhgfdsaqwertyuiop"
+				 "ZXCVBNMLKJHGFDSAQWERTYUIOP"
+				 "0123456789                ";
 	static const int absize = sizeof(ab) - 1;
 
 	if (msize > 0)
@@ -256,17 +241,16 @@ long xdlt_gen_line(char *buf, long msize) {
 	return size + 1;
 }
 
-
-int xdlt_create_file(mmfile_t *mf, long size) {
+int
+xdlt_create_file(mmfile_t *mf, long size)
+{
 	long lnsize, csize;
 	char *data;
 
 	if (xdl_init_mmfile(mf, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		return -1;
 	}
 	if (!(data = xdl_mmfile_writeallocate(mf, size))) {
-
 		xdl_free_mmfile(mf);
 		return -1;
 	}
@@ -281,21 +265,21 @@ int xdlt_create_file(mmfile_t *mf, long size) {
 	return 0;
 }
 
-
-int xdlt_change_file(mmfile_t *mfo, mmfile_t *mfr, double rmod,
-		     int chmax) {
+int
+xdlt_change_file(mmfile_t *mfo, mmfile_t *mfr, double rmod, int chmax)
+{
 	long skipln, lnsize, bsize;
 	char const *blk, *cur, *top, *eol;
 	char lnbuf[XDLT_MAX_LINE_SIZE + 1];
 
 	if (xdl_init_mmfile(mfr, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		return -1;
 	}
 	if ((blk = xdl_mmfile_first(mfo, &bsize)) != NULL) {
 		for (cur = blk, top = blk + bsize, skipln = 0;;) {
 			if (cur >= top) {
-				if ((blk = xdl_mmfile_next(mfo, &bsize)) == NULL)
+				if ((blk = xdl_mmfile_next(mfo, &bsize)) ==
+				    NULL)
 					break;
 				cur = blk;
 				top = blk + bsize;
@@ -307,18 +291,24 @@ int xdlt_change_file(mmfile_t *mfo, mmfile_t *mfr, double rmod,
 					skipln = rand() % chmax;
 					if (rand() & 1) {
 						for (; skipln > 0; skipln--) {
-							lnsize = xdlt_gen_line(lnbuf, XDLT_MAX_LINE_SIZE);
-							if (xdl_write_mmfile(mfr, lnbuf, lnsize) != lnsize) {
-
-								xdl_free_mmfile(mfr);
+							lnsize = xdlt_gen_line(
+								lnbuf,
+								XDLT_MAX_LINE_SIZE);
+							if (xdl_write_mmfile(
+								    mfr, lnbuf,
+								    lnsize) !=
+							    lnsize) {
+								xdl_free_mmfile(
+									mfr);
 								return -1;
 							}
 						}
 					}
 				} else {
 					lnsize = (eol - cur) + 1;
-					if (xdl_write_mmfile(mfr, cur, lnsize) != lnsize) {
-
+					if (xdl_write_mmfile(mfr, cur,
+					                     lnsize) !=
+					    lnsize) {
 						xdl_free_mmfile(mfr);
 						return -1;
 					}
@@ -333,22 +323,20 @@ int xdlt_change_file(mmfile_t *mfo, mmfile_t *mfr, double rmod,
 	return 0;
 }
 
-
-int xdlt_auto_regress(xpparam_t const *xpp, xdemitconf_t const *xecfg, long size,
-		      double rmod, int chmax) {
+int
+xdlt_auto_regress(xpparam_t const *xpp, xdemitconf_t const *xecfg, long size,
+                  double rmod, int chmax)
+{
 	mmfile_t mf1, mf2;
 
 	if (xdlt_create_file(&mf1, size) < 0) {
-
 		return -1;
 	}
 	if (xdlt_change_file(&mf1, &mf2, rmod, chmax) < 0) {
-
 		xdl_free_mmfile(&mf1);
 		return -1;
 	}
 	if (xdlt_do_regress(&mf1, &mf2, xpp, xecfg) < 0) {
-
 		xdl_free_mmfile(&mf2);
 		xdl_free_mmfile(&mf1);
 		return -1;
@@ -359,18 +347,18 @@ int xdlt_auto_regress(xpparam_t const *xpp, xdemitconf_t const *xecfg, long size
 	return 0;
 }
 
-
-int xdlt_do_bindiff(mmfile_t *mf1, mmfile_t *mf2, bdiffparam_t const *bdp, mmfile_t *mfp) {
+int
+xdlt_do_bindiff(mmfile_t *mf1, mmfile_t *mf2, bdiffparam_t const *bdp,
+                mmfile_t *mfp)
+{
 	xdemitcb_t ecb;
 
 	if (xdl_init_mmfile(mfp, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		return -1;
 	}
 	ecb.priv = mfp;
 	ecb.outf = xdlt_mmfile_outf;
 	if (xdl_bdiff(mf1, mf2, bdp, &ecb) < 0) {
-
 		xdl_free_mmfile(mfp);
 		return -1;
 	}
@@ -378,18 +366,17 @@ int xdlt_do_bindiff(mmfile_t *mf1, mmfile_t *mf2, bdiffparam_t const *bdp, mmfil
 	return 0;
 }
 
-
-int xdlt_do_rabdiff(mmfile_t *mf1, mmfile_t *mf2, mmfile_t *mfp) {
+int
+xdlt_do_rabdiff(mmfile_t *mf1, mmfile_t *mf2, mmfile_t *mfp)
+{
 	xdemitcb_t ecb;
 
 	if (xdl_init_mmfile(mfp, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		return -1;
 	}
 	ecb.priv = mfp;
 	ecb.outf = xdlt_mmfile_outf;
 	if (xdl_rabdiff(mf1, mf2, &ecb) < 0) {
-
 		xdl_free_mmfile(mfp);
 		return -1;
 	}
@@ -397,18 +384,17 @@ int xdlt_do_rabdiff(mmfile_t *mf1, mmfile_t *mf2, mmfile_t *mfp) {
 	return 0;
 }
 
-
-int xdlt_do_binpatch(mmfile_t *mf, mmfile_t *mfp, mmfile_t *mfr) {
+int
+xdlt_do_binpatch(mmfile_t *mf, mmfile_t *mfp, mmfile_t *mfr)
+{
 	xdemitcb_t ecb;
 
 	if (xdl_init_mmfile(mfr, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		return -1;
 	}
 	ecb.priv = mfr;
 	ecb.outf = xdlt_mmfile_outf;
 	if (xdl_bpatch(mf, mfp, &ecb) < 0) {
-
 		xdl_free_mmfile(mfr);
 		return -1;
 	}
@@ -416,21 +402,19 @@ int xdlt_do_binpatch(mmfile_t *mf, mmfile_t *mfp, mmfile_t *mfr) {
 	return 0;
 }
 
-
-int xdlt_do_binregress(mmfile_t *mf1, mmfile_t *mf2, bdiffparam_t const *bdp) {
+int
+xdlt_do_binregress(mmfile_t *mf1, mmfile_t *mf2, bdiffparam_t const *bdp)
+{
 	mmfile_t mfp, mfr;
 
 	if (xdlt_do_bindiff(mf1, mf2, bdp, &mfp) < 0) {
-
 		return -1;
 	}
 	if (xdlt_do_binpatch(mf1, &mfp, &mfr) < 0) {
-
 		xdl_free_mmfile(&mfp);
 		return -1;
 	}
 	if (xdl_mmfile_cmp(&mfr, mf2)) {
-
 		xdl_free_mmfile(&mfr);
 		xdl_free_mmfile(&mfp);
 		return -1;
@@ -441,21 +425,19 @@ int xdlt_do_binregress(mmfile_t *mf1, mmfile_t *mf2, bdiffparam_t const *bdp) {
 	return 0;
 }
 
-
-int xdlt_do_rabinregress(mmfile_t *mf1, mmfile_t *mf2) {
+int
+xdlt_do_rabinregress(mmfile_t *mf1, mmfile_t *mf2)
+{
 	mmfile_t mfp, mfr;
 
 	if (xdlt_do_rabdiff(mf1, mf2, &mfp) < 0) {
-
 		return -1;
 	}
 	if (xdlt_do_binpatch(mf1, &mfp, &mfr) < 0) {
-
 		xdl_free_mmfile(&mfp);
 		return -1;
 	}
 	if (xdl_mmfile_cmp(&mfr, mf2)) {
-
 		xdl_free_mmfile(&mfr);
 		xdl_free_mmfile(&mfp);
 		return -1;
@@ -466,29 +448,26 @@ int xdlt_do_rabinregress(mmfile_t *mf1, mmfile_t *mf2) {
 	return 0;
 }
 
-
-int xdlt_auto_binregress(bdiffparam_t const *bdp, long size,
-			 double rmod, int chmax) {
+int
+xdlt_auto_binregress(bdiffparam_t const *bdp, long size, double rmod, int chmax)
+{
 	mmfile_t mf1, mf2, mf2c;
 
 	if (xdlt_create_file(&mf1, size) < 0) {
-
 		return -1;
 	}
 	if (xdlt_change_file(&mf1, &mf2, rmod, chmax) < 0) {
-
 		xdl_free_mmfile(&mf1);
 		return -1;
 	}
-	if (xdl_mmfile_compact(&mf2, &mf2c, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
+	if (xdl_mmfile_compact(&mf2, &mf2c, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) <
+	    0) {
 		xdl_free_mmfile(&mf2);
 		xdl_free_mmfile(&mf1);
 		return -1;
 	}
 	xdl_free_mmfile(&mf2);
 	if (xdlt_do_binregress(&mf1, &mf2c, bdp) < 0) {
-
 		xdl_free_mmfile(&mf2c);
 		xdl_free_mmfile(&mf1);
 		return -1;
@@ -499,28 +478,26 @@ int xdlt_auto_binregress(bdiffparam_t const *bdp, long size,
 	return 0;
 }
 
-
-int xdlt_auto_rabinregress(long size, double rmod, int chmax) {
+int
+xdlt_auto_rabinregress(long size, double rmod, int chmax)
+{
 	mmfile_t mf1, mf2, mf2c;
 
 	if (xdlt_create_file(&mf1, size) < 0) {
-
 		return -1;
 	}
 	if (xdlt_change_file(&mf1, &mf2, rmod, chmax) < 0) {
-
 		xdl_free_mmfile(&mf1);
 		return -1;
 	}
-	if (xdl_mmfile_compact(&mf2, &mf2c, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
+	if (xdl_mmfile_compact(&mf2, &mf2c, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) <
+	    0) {
 		xdl_free_mmfile(&mf2);
 		xdl_free_mmfile(&mf1);
 		return -1;
 	}
 	xdl_free_mmfile(&mf2);
 	if (xdlt_do_rabinregress(&mf1, &mf2c) < 0) {
-
 		xdl_free_mmfile(&mf2c);
 		xdl_free_mmfile(&mf1);
 		return -1;
@@ -531,47 +508,48 @@ int xdlt_auto_rabinregress(long size, double rmod, int chmax) {
 	return 0;
 }
 
-
-int xdlt_auto_mbinregress(bdiffparam_t const *bdp, long size,
-			  double rmod, int chmax, int n) {
+int
+xdlt_auto_mbinregress(bdiffparam_t const *bdp, long size, double rmod,
+                      int chmax, int n)
+{
 	int i, res;
 	mmbuffer_t *mbb;
 	mmfile_t *mf, *mfc, *mfx;
 	mmfile_t mfn, mff, mfd, mfb;
 	xdemitcb_t ecb;
 
-	if ((mbb = (mmbuffer_t *) xdl_malloc((n + 2) * sizeof(mmbuffer_t))) == NULL) {
-
+	if ((mbb = (mmbuffer_t *)xdl_malloc((n + 2) * sizeof(mmbuffer_t))) ==
+	    NULL) {
 		return -1;
 	}
-	if ((mf = mfc = (mmfile_t *) xdl_malloc((n + 2) * sizeof(mmfile_t))) == NULL) {
-
+	if ((mf = mfc = (mmfile_t *)xdl_malloc((n + 2) * sizeof(mmfile_t))) ==
+	    NULL) {
 		xdl_free(mbb);
 		return -1;
 	}
 	if (xdlt_create_file(mfc, size) < 0) {
-
 		xdl_free(mf);
 		xdl_free(mbb);
 		return -1;
 	}
-	mbb[0].ptr = (char *) xdl_mmfile_first(mfc, &mbb[0].size);
+	mbb[0].ptr = (char *)xdl_mmfile_first(mfc, &mbb[0].size);
 	mfc++;
 	mfx = mf;
 	for (i = 0; i < n; i++) {
 		if (xdlt_change_file(mfx, &mfn, rmod, chmax) < 0) {
-
-			if (mfx != mf) xdl_free_mmfile(mfx);
+			if (mfx != mf)
+				xdl_free_mmfile(mfx);
 			for (; i >= 0; i--)
 				xdl_free_mmfile(mf + i);
 			xdl_free(mf);
 			xdl_free(mbb);
 			return -1;
 		}
-		if (xdl_mmfile_compact(&mfn, &mff, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
+		if (xdl_mmfile_compact(&mfn, &mff, XDLT_STD_BLKSIZE,
+		                       XDL_MMF_ATOMIC) < 0) {
 			xdl_free_mmfile(&mfn);
-			if (mfx != mf) xdl_free_mmfile(mfx);
+			if (mfx != mf)
+				xdl_free_mmfile(mfx);
 			for (; i >= 0; i--)
 				xdl_free_mmfile(mf + i);
 			xdl_free(mf);
@@ -580,20 +558,21 @@ int xdlt_auto_mbinregress(bdiffparam_t const *bdp, long size,
 		}
 		xdl_free_mmfile(&mfn);
 		if (xdlt_do_bindiff(mfx, &mff, bdp, &mfd) < 0) {
-
 			xdl_free_mmfile(&mff);
-			if (mfx != mf) xdl_free_mmfile(mfx);
+			if (mfx != mf)
+				xdl_free_mmfile(mfx);
 			for (; i >= 0; i--)
 				xdl_free_mmfile(mf + i);
 			xdl_free(mf);
 			xdl_free(mbb);
 			return -1;
 		}
-		if (mfx != mf) xdl_free_mmfile(mfx);
+		if (mfx != mf)
+			xdl_free_mmfile(mfx);
 		mfx = &mfb;
 		*mfx = mff;
-		if (xdl_mmfile_compact(&mfd, mfc, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
+		if (xdl_mmfile_compact(&mfd, mfc, XDLT_STD_BLKSIZE,
+		                       XDL_MMF_ATOMIC) < 0) {
 			xdl_free_mmfile(&mfd);
 			xdl_free_mmfile(mfx);
 			for (; i >= 0; i--)
@@ -602,12 +581,12 @@ int xdlt_auto_mbinregress(bdiffparam_t const *bdp, long size,
 			xdl_free(mbb);
 			return -1;
 		}
-		mbb[i + 1].ptr = (char *) xdl_mmfile_first(mfc, &mbb[i + 1].size);
+		mbb[i + 1].ptr =
+			(char *)xdl_mmfile_first(mfc, &mbb[i + 1].size);
 		mfc++;
 		xdl_free_mmfile(&mfd);
 	}
 	if (xdl_init_mmfile(mfc, XDLT_STD_BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-
 		xdl_free_mmfile(mfx);
 		for (i = n; i >= 0; i--)
 			xdl_free_mmfile(mf + i);
@@ -628,4 +607,3 @@ int xdlt_auto_mbinregress(bdiffparam_t const *bdp, long size,
 
 	return res;
 }
-

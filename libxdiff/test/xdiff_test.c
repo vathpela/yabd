@@ -30,53 +30,53 @@
 #include "xdiff.h"
 #include "xtestutils.h"
 
-
-
-
-
-static int xdlt_outf(void *priv, mmbuffer_t *mb, int nbuf) {
+static int
+xdlt_outf(void *priv, mmbuffer_t *mb, int nbuf)
+{
 	int i;
 
 	for (i = 0; i < nbuf; i++)
-		if (!fwrite(mb[i].ptr, mb[i].size, 1, (FILE *) priv))
+		if (!fwrite(mb[i].ptr, mb[i].size, 1, (FILE *)priv))
 			return -1;
 
 	return 0;
 }
 
-
-void usage(char const *prg) {
-
+void
+usage(char const *prg)
+{
 	fprintf(stderr,
-		"use: %s --diff [-C N]   from-file  to-file\n"
-		"     %s --patch         orig-file  patch-file\n"
-		"     %s --bdiff [-B N]  from-file  to-file\n"
-		"     %s --rabdiff       from-file  to-file\n"
-		"     %s --bpatch        orig-file  patch-file\n",
-		prg, prg, prg, prg, prg);
+	        "use: %s --diff [-C N]   from-file  to-file\n"
+	        "     %s --patch         orig-file  patch-file\n"
+	        "     %s --bdiff [-B N]  from-file  to-file\n"
+	        "     %s --rabdiff       from-file  to-file\n"
+	        "     %s --bpatch        orig-file  patch-file\n",
+	        prg, prg, prg, prg, prg);
 }
 
-
-static void *wrap_malloc(void *priv, unsigned int size) {
-
+static void *
+wrap_malloc(void *priv, unsigned int size)
+{
 	return malloc(size);
 }
 
-
-static void wrap_free(void *priv, void *ptr) {
-
+static void
+wrap_free(void *priv, void *ptr)
+{
 	free(ptr);
 }
 
-
-static void *wrap_realloc(void *priv, void *ptr, unsigned int size) {
-
+static void *
+wrap_realloc(void *priv, void *ptr, unsigned int size)
+{
 	return realloc(ptr, size);
 }
 
-
-int main(int argc, char *argv[]) {
-	int i = 1, ctxlen = 3, bsize = 16, do_diff, do_patch, do_bdiff, do_bpatch, do_rabdiff;
+int
+main(int argc, char *argv[])
+{
+	int i = 1, ctxlen = 3, bsize = 16, do_diff, do_patch, do_bdiff,
+	    do_bpatch, do_rabdiff;
 	memallocator_t malt;
 	mmfile_t mf1, mf2;
 	xpparam_t xpp;
@@ -137,11 +137,9 @@ int main(int argc, char *argv[]) {
 	xecfg.ctxlen = ctxlen;
 	bdp.bsize = bsize;
 	if (xdlt_load_mmfile(argv[i], &mf1, do_bdiff || do_bpatch) < 0) {
-
 		return 2;
 	}
 	if (xdlt_load_mmfile(argv[i + 1], &mf2, do_bdiff || do_bpatch) < 0) {
-
 		xdl_free_mmfile(&mf1);
 		return 2;
 	}
@@ -150,7 +148,6 @@ int main(int argc, char *argv[]) {
 		ecb.outf = xdlt_outf;
 
 		if (xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb) < 0) {
-
 			xdl_free_mmfile(&mf2);
 			xdl_free_mmfile(&mf1);
 			return 3;
@@ -159,7 +156,6 @@ int main(int argc, char *argv[]) {
 		ecb.priv = stdout;
 		ecb.outf = xdlt_outf;
 		if (xdl_bdiff(&mf1, &mf2, &bdp, &ecb) < 0) {
-
 			xdl_free_mmfile(&mf2);
 			xdl_free_mmfile(&mf1);
 			return 4;
@@ -168,7 +164,6 @@ int main(int argc, char *argv[]) {
 		ecb.priv = stdout;
 		ecb.outf = xdlt_outf;
 		if (xdl_rabdiff(&mf1, &mf2, &ecb) < 0) {
-
 			xdl_free_mmfile(&mf2);
 			xdl_free_mmfile(&mf1);
 			return 4;
@@ -177,7 +172,6 @@ int main(int argc, char *argv[]) {
 		ecb.priv = stdout;
 		ecb.outf = xdlt_outf;
 		if (xdl_bpatch(&mf1, &mf2, &ecb) < 0) {
-
 			xdl_free_mmfile(&mf2);
 			xdl_free_mmfile(&mf1);
 			return 5;
@@ -188,7 +182,6 @@ int main(int argc, char *argv[]) {
 		rjecb.priv = stderr;
 		rjecb.outf = xdlt_outf;
 		if (xdl_patch(&mf1, &mf2, XDL_PATCH_NORMAL, &ecb, &rjecb) < 0) {
-
 			xdl_free_mmfile(&mf2);
 			xdl_free_mmfile(&mf1);
 			return 6;
@@ -199,4 +192,3 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
-

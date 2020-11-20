@@ -28,13 +28,13 @@ extern "C" {
 #endif /* #ifdef __cplusplus */
 
 #ifdef _WIN32
-    #ifdef LIBXDIFF_DLL_EXPORT
-        #define LIBXDIFF_EXPORT __declspec(dllexport)
-    #else
-        #define LIBXDIFF_EXPORT __declspec(dllimport)
-    #endif
+#ifdef LIBXDIFF_DLL_EXPORT
+#define LIBXDIFF_EXPORT __declspec(dllexport)
 #else
-    #define LIBXDIFF_EXPORT
+#define LIBXDIFF_EXPORT __declspec(dllimport)
+#endif
+#else
+#define LIBXDIFF_EXPORT
 #endif
 
 #define XDF_NEED_MINIMAL (1 << 1)
@@ -51,8 +51,6 @@ extern "C" {
 #define XDL_BDOP_INS 1
 #define XDL_BDOP_CPY 2
 #define XDL_BDOP_INSB 3
-
-
 
 LIBXDIFF_EXPORT typedef struct s_memallocator {
 	void *priv;
@@ -97,48 +95,54 @@ LIBXDIFF_EXPORT typedef struct s_bdiffparam {
 	long bsize;
 } bdiffparam_t;
 
-
 LIBXDIFF_EXPORT int xdl_set_allocator(memallocator_t const *malt);
 LIBXDIFF_EXPORT void *xdl_malloc(unsigned int size);
 LIBXDIFF_EXPORT void xdl_free(void *ptr);
 LIBXDIFF_EXPORT void *xdl_realloc(void *ptr, unsigned int size);
 
-LIBXDIFF_EXPORT int xdl_init_mmfile(mmfile_t *mmf, long bsize, unsigned long flags);
+LIBXDIFF_EXPORT int xdl_init_mmfile(mmfile_t *mmf, long bsize,
+                                    unsigned long flags);
 LIBXDIFF_EXPORT void xdl_free_mmfile(mmfile_t *mmf);
 LIBXDIFF_EXPORT int xdl_mmfile_iscompact(mmfile_t *mmf);
 LIBXDIFF_EXPORT int xdl_seek_mmfile(mmfile_t *mmf, long off);
 LIBXDIFF_EXPORT long xdl_read_mmfile(mmfile_t *mmf, void *data, long size);
-LIBXDIFF_EXPORT long xdl_write_mmfile(mmfile_t *mmf, void const *data, long size);
+LIBXDIFF_EXPORT long xdl_write_mmfile(mmfile_t *mmf, void const *data,
+                                      long size);
 LIBXDIFF_EXPORT long xdl_writem_mmfile(mmfile_t *mmf, mmbuffer_t *mb, int nbuf);
 LIBXDIFF_EXPORT void *xdl_mmfile_writeallocate(mmfile_t *mmf, long size);
-LIBXDIFF_EXPORT long xdl_mmfile_ptradd(mmfile_t *mmf, char *ptr, long size, unsigned long flags);
+LIBXDIFF_EXPORT long xdl_mmfile_ptradd(mmfile_t *mmf, char *ptr, long size,
+                                       unsigned long flags);
 LIBXDIFF_EXPORT long xdl_copy_mmfile(mmfile_t *mmf, long size, xdemitcb_t *ecb);
 LIBXDIFF_EXPORT void *xdl_mmfile_first(mmfile_t *mmf, long *size);
 LIBXDIFF_EXPORT void *xdl_mmfile_next(mmfile_t *mmf, long *size);
 LIBXDIFF_EXPORT long xdl_mmfile_size(mmfile_t *mmf);
 LIBXDIFF_EXPORT int xdl_mmfile_cmp(mmfile_t *mmf1, mmfile_t *mmf2);
-LIBXDIFF_EXPORT int xdl_mmfile_compact(mmfile_t *mmfo, mmfile_t *mmfc, long bsize, unsigned long flags);
+LIBXDIFF_EXPORT int xdl_mmfile_compact(mmfile_t *mmfo, mmfile_t *mmfc,
+                                       long bsize, unsigned long flags);
 
 LIBXDIFF_EXPORT int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
-	     xdemitconf_t const *xecfg, xdemitcb_t *ecb);
-LIBXDIFF_EXPORT int xdl_patch(mmfile_t *mf, mmfile_t *mfp, int mode, xdemitcb_t *ecb,
-	      xdemitcb_t *rjecb);
+                             xdemitconf_t const *xecfg, xdemitcb_t *ecb);
+LIBXDIFF_EXPORT int xdl_patch(mmfile_t *mf, mmfile_t *mfp, int mode,
+                              xdemitcb_t *ecb, xdemitcb_t *rjecb);
 
-LIBXDIFF_EXPORT int xdl_merge3(mmfile_t *mmfo, mmfile_t *mmf1, mmfile_t *mmf2, xdemitcb_t *ecb,
-	       xdemitcb_t *rjecb);
+LIBXDIFF_EXPORT int xdl_merge3(mmfile_t *mmfo, mmfile_t *mmf1, mmfile_t *mmf2,
+                               xdemitcb_t *ecb, xdemitcb_t *rjecb);
 
-LIBXDIFF_EXPORT int xdl_bdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, bdiffparam_t const *bdp, xdemitcb_t *ecb);
-LIBXDIFF_EXPORT int xdl_bdiff(mmfile_t *mmf1, mmfile_t *mmf2, bdiffparam_t const *bdp, xdemitcb_t *ecb);
-LIBXDIFF_EXPORT int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb);
-LIBXDIFF_EXPORT int xdl_rabdiff(mmfile_t *mmf1, mmfile_t *mmf2, xdemitcb_t *ecb);
+LIBXDIFF_EXPORT int xdl_bdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2,
+                                 bdiffparam_t const *bdp, xdemitcb_t *ecb);
+LIBXDIFF_EXPORT int xdl_bdiff(mmfile_t *mmf1, mmfile_t *mmf2,
+                              bdiffparam_t const *bdp, xdemitcb_t *ecb);
+LIBXDIFF_EXPORT int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2,
+                                   xdemitcb_t *ecb);
+LIBXDIFF_EXPORT int xdl_rabdiff(mmfile_t *mmf1, mmfile_t *mmf2,
+                                xdemitcb_t *ecb);
 LIBXDIFF_EXPORT long xdl_bdiff_tgsize(mmfile_t *mmfp);
 LIBXDIFF_EXPORT int xdl_bpatch(mmfile_t *mmf, mmfile_t *mmfp, xdemitcb_t *ecb);
-LIBXDIFF_EXPORT int xdl_bpatch_multi(mmbuffer_t *base, mmbuffer_t *mbpch, int n, xdemitcb_t *ecb);
-
+LIBXDIFF_EXPORT int xdl_bpatch_multi(mmbuffer_t *base, mmbuffer_t *mbpch, int n,
+                                     xdemitcb_t *ecb);
 
 #ifdef __cplusplus
 }
 #endif /* #ifdef __cplusplus */
 
 #endif /* #if !defined(XDIFF_H) */
-

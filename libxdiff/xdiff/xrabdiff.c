@@ -31,28 +31,24 @@
 
 #include "xinclude.h"
 
-
 #if !defined(XRABPLY_TYPE32) && !defined(XRABPLY_TYPE64)
 #define XRABPLY_TYPE64 long long
-#define XV64(v) ((xply_word) v ## ULL)
+#define XV64(v) ((xply_word)v##ULL)
 #endif
 
 #include "xrabply.c"
 
-
-
-#define XRAB_SLIDE(v, c) do {					\
-		if (++wpos == XRAB_WNDSIZE) wpos = 0;		\
-		v ^= U[wbuf[wpos]];				\
-		wbuf[wpos] = (c);				\
-		v = ((v << 8) | (c)) ^ T[v >> XRAB_SHIFT];	\
+#define XRAB_SLIDE(v, c)                                   \
+	do {                                               \
+		if (++wpos == XRAB_WNDSIZE)                \
+			wpos = 0;                          \
+		v ^= U[wbuf[wpos]];                        \
+		wbuf[wpos] = (c);                          \
+		v = ((v << 8) | (c)) ^ T[v >> XRAB_SHIFT]; \
 	} while (0)
-
 
 #define XRAB_MINCPYSIZE 12
 #define XRAB_WBITS (sizeof(xply_word) * 8)
-
-
 
 typedef struct s_xrabctx {
 	long idxsize;
@@ -72,27 +68,29 @@ typedef struct s_xrabcpyi_arena {
 	xrabcpyi_t *acpy;
 } xrabcpyi_arena_t;
 
-
-
-static void xrab_init_cpyarena(xrabcpyi_arena_t *aca) {
+static void
+xrab_init_cpyarena(xrabcpyi_arena_t *aca)
+{
 	aca->cnt = aca->size = 0;
 	aca->acpy = NULL;
 }
 
-
-static void xrab_free_cpyarena(xrabcpyi_arena_t *aca) {
+static void
+xrab_free_cpyarena(xrabcpyi_arena_t *aca)
+{
 	xdl_free(aca->acpy);
 }
 
-
-static int xrab_add_cpy(xrabcpyi_arena_t *aca, xrabcpyi_t const *rcpy) {
+static int
+xrab_add_cpy(xrabcpyi_arena_t *aca, xrabcpyi_t const *rcpy)
+{
 	long size;
 	xrabcpyi_t *acpy;
 
 	if (aca->cnt >= aca->size) {
 		size = 2 * aca->size + 1024;
-		if ((acpy = (xrabcpyi_t *)
-		     xdl_realloc(aca->acpy, size * sizeof(xrabcpyi_t))) == NULL)
+		if ((acpy = (xrabcpyi_t *)xdl_realloc(
+			     aca->acpy, size * sizeof(xrabcpyi_t))) == NULL)
 			return -1;
 		aca->acpy = acpy;
 		aca->size = size;
@@ -102,18 +100,22 @@ static int xrab_add_cpy(xrabcpyi_arena_t *aca, xrabcpyi_t const *rcpy) {
 	return 0;
 }
 
-
-static long xrab_cmnseq(unsigned char const *data, long start, long size) {
+static long
+xrab_cmnseq(unsigned char const *data, long start, long size)
+{
 	unsigned char ch = data[start];
 	unsigned char const *ptr, *top;
 
-	for (ptr = data + start + 1, top = data + size; ptr < top && ch == *ptr; ptr++);
+	for (ptr = data + start + 1, top = data + size; ptr < top && ch == *ptr;
+	     ptr++)
+		;
 
-	return (long) (ptr - (data + start + 1));
+	return (long)(ptr - (data + start + 1));
 }
 
-
-static int xrab_build_ctx(unsigned char const *data, long size, xrabctx_t *ctx) {
+static int
+xrab_build_ctx(unsigned char const *data, long size, xrabctx_t *ctx)
+{
 	long i, isize, idxsize, seq, wpos = 0;
 	xply_word fp = 0, mask;
 	unsigned char ch;
@@ -127,9 +129,10 @@ static int xrab_build_ctx(unsigned char const *data, long size, xrabctx_t *ctx) 
 	memset(wbuf, 0, sizeof(wbuf));
 	memset(maxseq, 0, sizeof(maxseq));
 	isize = 2 * (size / XRAB_WNDSIZE);
-	for (idxsize = 1; idxsize < isize; idxsize <<= 1);
-	mask = (xply_word) (idxsize - 1);
-	if ((idx = (long *) xdl_malloc(idxsize * sizeof(long))) == NULL)
+	for (idxsize = 1; idxsize < isize; idxsize <<= 1)
+		;
+	mask = (xply_word)(idxsize - 1);
+	if ((idx = (long *)xdl_malloc(idxsize * sizeof(long))) == NULL)
 		return -1;
 	memset(idx, 0, idxsize * sizeof(long));
 	for (i = 0; i + XRAB_WNDSIZE < size; i += XRAB_WNDSIZE) {
@@ -173,15 +176,16 @@ static int xrab_build_ctx(unsigned char const *data, long size, xrabctx_t *ctx) 
 	return 0;
 }
 
-
-static void xrab_free_ctx(xrabctx_t *ctx) {
-
+static void
+xrab_free_ctx(xrabctx_t *ctx)
+{
 	xdl_free(ctx->idx);
 }
 
-
-static int xrab_diff(unsigned char const *data, long size, xrabctx_t *ctx,
-		     xrabcpyi_arena_t *aca) {
+static int
+xrab_diff(unsigned char const *data, long size, xrabctx_t *ctx,
+          xrabcpyi_arena_t *aca)
+{
 	long i, offs, ssize, src, tgt, esrc, etgt, wpos = 0;
 	xply_word fp = 0, mask;
 	long const *idx;
@@ -196,7 +200,7 @@ static int xrab_diff(unsigned char const *data, long size, xrabctx_t *ctx,
 	idx = ctx->idx;
 	sdata = ctx->data;
 	ssize = ctx->size;
-	mask = (xply_word) (ctx->idxsize - 1);
+	mask = (xply_word)(ctx->idxsize - 1);
 	while (i < size) {
 		unsigned char ch = data[i++];
 
@@ -216,11 +220,13 @@ static int xrab_diff(unsigned char const *data, long size, xrabctx_t *ctx,
 		src = offs - 1;
 		tgt = i - 1;
 		for (; tgt > 0 && src > 0 && data[tgt - 1] == sdata[src - 1];
-		     tgt--, src--);
+		     tgt--, src--)
+			;
 		esrc = offs;
 		etgt = i;
 		for (; etgt < size && esrc < ssize && data[etgt] == sdata[esrc];
-		     etgt++, esrc++);
+		     etgt++, esrc++)
+			;
 
 		/*
 		 * Avoid considering copies smaller than the XRAB_MINCPYSIZE
@@ -246,9 +252,10 @@ static int xrab_diff(unsigned char const *data, long size, xrabctx_t *ctx,
 	return 0;
 }
 
-
-static int xrab_tune_cpyarena(unsigned char const *data, long size, xrabctx_t *ctx,
-			      xrabcpyi_arena_t *aca) {
+static int
+xrab_tune_cpyarena(unsigned char const *data, long size, xrabctx_t *ctx,
+                   xrabcpyi_arena_t *aca)
+{
 	long i, cpos;
 	xrabcpyi_t *rcpy;
 
@@ -268,8 +275,9 @@ static int xrab_tune_cpyarena(unsigned char const *data, long size, xrabctx_t *c
 	return 0;
 }
 
-
-int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb) {
+int
+xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb)
+{
 	long i, cpos, size;
 	unsigned long fp;
 	xrabcpyi_t *rcpy;
@@ -279,16 +287,16 @@ int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb) {
 	unsigned char cpybuf[32];
 
 	fp = xdl_mmb_adler32(mmb1);
-	if (xrab_build_ctx((unsigned char const *) mmb1->ptr, mmb1->size,
-			   &ctx) < 0)
+	if (xrab_build_ctx((unsigned char const *)mmb1->ptr, mmb1->size, &ctx) <
+	    0)
 		return -1;
-	if (xrab_diff((unsigned char const *) mmb2->ptr, mmb2->size, &ctx,
-		      &aca) < 0) {
+	if (xrab_diff((unsigned char const *)mmb2->ptr, mmb2->size, &ctx,
+	              &aca) < 0) {
 		xrab_free_ctx(&ctx);
 		return -1;
 	}
-	xrab_tune_cpyarena((unsigned char const *) mmb2->ptr, mmb2->size, &ctx,
-			   &aca);
+	xrab_tune_cpyarena((unsigned char const *)mmb2->ptr, mmb2->size, &ctx,
+	                   &aca);
 	xrab_free_ctx(&ctx);
 
 	/*
@@ -300,7 +308,7 @@ int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb) {
 	XDL_LE32_PUT(cpybuf, fp);
 	XDL_LE32_PUT(cpybuf + 4, size);
 
-	mb[0].ptr = (char *) cpybuf;
+	mb[0].ptr = (char *)cpybuf;
 	mb[0].size = 4 + 4;
 	if (ecb->outf(ecb->priv, mb, 1) < 0) {
 		xrab_free_cpyarena(&aca);
@@ -315,12 +323,12 @@ int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb) {
 			if (size > 255) {
 				cpybuf[0] = XDL_BDOP_INSB;
 				XDL_LE32_PUT(cpybuf + 1, size);
-				mb[0].ptr = (char *) cpybuf;
+				mb[0].ptr = (char *)cpybuf;
 				mb[0].size = XDL_INSBOP_SIZE;
 			} else {
 				cpybuf[0] = XDL_BDOP_INS;
-				cpybuf[1] = (unsigned char) size;
-				mb[0].ptr = (char *) cpybuf;
+				cpybuf[1] = (unsigned char)size;
+				mb[0].ptr = (char *)cpybuf;
 				mb[0].size = 2;
 			}
 			mb[1].ptr = mmb2->ptr + cpos;
@@ -334,7 +342,7 @@ int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb) {
 		cpybuf[0] = XDL_BDOP_CPY;
 		XDL_LE32_PUT(cpybuf + 1, rcpy->src);
 		XDL_LE32_PUT(cpybuf + 5, rcpy->len);
-		mb[0].ptr = (char *) cpybuf;
+		mb[0].ptr = (char *)cpybuf;
 		mb[0].size = XDL_COPYOP_SIZE;
 		if (ecb->outf(ecb->priv, mb, 1) < 0) {
 			xrab_free_cpyarena(&aca);
@@ -348,12 +356,12 @@ int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb) {
 		if (size > 255) {
 			cpybuf[0] = XDL_BDOP_INSB;
 			XDL_LE32_PUT(cpybuf + 1, size);
-			mb[0].ptr = (char *) cpybuf;
+			mb[0].ptr = (char *)cpybuf;
 			mb[0].size = XDL_INSBOP_SIZE;
 		} else {
 			cpybuf[0] = XDL_BDOP_INS;
-			cpybuf[1] = (unsigned char) size;
-			mb[0].ptr = (char *) cpybuf;
+			cpybuf[1] = (unsigned char)size;
+			mb[0].ptr = (char *)cpybuf;
 			mb[0].size = 2;
 		}
 		mb[1].ptr = mmb2->ptr + cpos;
@@ -365,17 +373,17 @@ int xdl_rabdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, xdemitcb_t *ecb) {
 	return 0;
 }
 
-
-int xdl_rabdiff(mmfile_t *mmf1, mmfile_t *mmf2, xdemitcb_t *ecb) {
+int
+xdl_rabdiff(mmfile_t *mmf1, mmfile_t *mmf2, xdemitcb_t *ecb)
+{
 	mmbuffer_t mmb1, mmb2;
 
 	if (!xdl_mmfile_iscompact(mmf1) || !xdl_mmfile_iscompact(mmf2))
 		return -1;
-	if ((mmb1.ptr = (char *) xdl_mmfile_first(mmf1, &mmb1.size)) == NULL)
+	if ((mmb1.ptr = (char *)xdl_mmfile_first(mmf1, &mmb1.size)) == NULL)
 		mmb1.size = 0;
-	if ((mmb2.ptr = (char *) xdl_mmfile_first(mmf2, &mmb2.size)) == NULL)
+	if ((mmb2.ptr = (char *)xdl_mmfile_first(mmf2, &mmb2.size)) == NULL)
 		mmb2.size = 0;
 
 	return xdl_rabdiff_mb(&mmb1, &mmb2, ecb);
 }
-

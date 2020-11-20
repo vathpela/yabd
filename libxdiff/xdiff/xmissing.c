@@ -22,25 +22,26 @@
 
 #include "xinclude.h"
 
-
-
 #if !defined(HAVE_MEMCHR)
 
-void *memchr(void const *p, int c, long n) {
+void *
+memchr(void const *p, int c, long n)
+{
 	char const *pc = p;
 
 	for (; n; n--, pc++)
-		if (*pc == (char) c)
+		if (*pc == (char)c)
 			return pc;
 	return NULL;
 }
 
 #endif /* #if !defined(HAVE_MEMCHR) */
 
-
 #if !defined(HAVE_MEMCMP)
 
-int memcmp(void const *p1, void const *p2, long n) {
+int
+memcmp(void const *p1, void const *p2, long n)
+{
 	char const *pc1 = p1, *pc2 = p2;
 
 	for (; n; n--, pc1++, pc2++)
@@ -51,10 +52,11 @@ int memcmp(void const *p1, void const *p2, long n) {
 
 #endif /* #if !defined(HAVE_MEMCMP) */
 
-
 #if !defined(HAVE_MEMCPY)
 
-void *memcpy(void *d, void const *s, long n) {
+void *
+memcpy(void *d, void const *s, long n)
+{
 	char *dc = d;
 	char const *sc = s;
 
@@ -65,28 +67,30 @@ void *memcpy(void *d, void const *s, long n) {
 
 #endif /* #if !defined(HAVE_MEMCPY) */
 
-
 #if !defined(HAVE_MEMSET)
 
-void *memset(void *d, int c, long n) {
+void *
+memset(void *d, int c, long n)
+{
 	char *dc = d;
 
 	for (; n; n--, dc++)
-		*dc = (char) c;
+		*dc = (char)c;
 	return d;
 }
 
 #endif /* #if !defined(HAVE_MEMSET) */
 
-
 #if !defined(HAVE_STRLEN)
 
-long strlen(char const *s) {
+long
+strlen(char const *s)
+{
 	char const *tmp;
 
-	for (tmp = s; *s; s++);
-	return (long) (s - tmp);
+	for (tmp = s; *s; s++)
+		;
+	return (long)(s - tmp);
 }
 
 #endif /* #if !defined(HAVE_STRLEN) */
-

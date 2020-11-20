@@ -34,12 +34,9 @@
 #include <string.h>
 #include <time.h>
 
-
-
 #if defined(WIN32)
 #define strtoll _strtoi64
 #endif
-
 
 #if !defined(XRAB_WORD_TYPE)
 #if defined(WIN32)
@@ -62,17 +59,13 @@
 #endif /* #if !defined(XRAB_WORD_PFMT) */
 
 #define XPLYW_BITS (sizeof(xply_word) * 8)
-#define XPLYW_MSB ((xply_word) 1 << (sizeof(xply_word) * 8 - 1))
-
-
+#define XPLYW_MSB ((xply_word)1 << (sizeof(xply_word) * 8 - 1))
 
 typedef unsigned XRAB_WORD_TYPE xply_word;
 
-
-
-
-static int xrab_isprime(int n) {
-
+static int
+xrab_isprime(int n)
+{
 	if (n > 3) {
 		if (n & 1) {
 			int i, hn = n / 2;
@@ -87,9 +80,11 @@ static int xrab_isprime(int n) {
 	return 1;
 }
 
-static int xrab_fls(xply_word v) {
+static int
+xrab_fls(xply_word v)
+{
 	int r, s;
-	xply_word mask = ~(((xply_word) 1 << (XPLYW_BITS / 2)) - 1);
+	xply_word mask = ~(((xply_word)1 << (XPLYW_BITS / 2)) - 1);
 
 	if (v == 0)
 		return 0;
@@ -105,7 +100,9 @@ static int xrab_fls(xply_word v) {
 	return r;
 }
 
-static xply_word xrab_polymod(xply_word nh, xply_word nl, xply_word d) {
+static xply_word
+xrab_polymod(xply_word nh, xply_word nl, xply_word d)
+{
 	int i, k = xrab_fls(d) - 1;
 
 	d <<= (XPLYW_BITS - 1) - k;
@@ -113,20 +110,21 @@ static xply_word xrab_polymod(xply_word nh, xply_word nl, xply_word d) {
 		if (nh & XPLYW_MSB)
 			nh ^= d;
 		for (i = XPLYW_BITS - 2; i >= 0; i--)
-			if (nh & ((xply_word) 1) << i) {
+			if (nh & ((xply_word)1) << i) {
 				nh ^= d >> (XPLYW_BITS - 1) - i;
 				nl ^= d << i + 1;
 			}
 	}
 	for (i = XPLYW_BITS - 1; i >= k; i--)
-		if (nl & ((xply_word) 1 << i))
+		if (nl & ((xply_word)1 << i))
 			nl ^= d >> (XPLYW_BITS - 1) - i;
 
 	return nl;
 }
 
-static xply_word xrab_polygcd(xply_word x, xply_word y) {
-
+static xply_word
+xrab_polygcd(xply_word x, xply_word y)
+{
 	for (;;) {
 		if (!y)
 			return x;
@@ -137,15 +135,16 @@ static xply_word xrab_polygcd(xply_word x, xply_word y) {
 	}
 }
 
-static void xrab_polymult(xply_word *php, xply_word *plp, xply_word x,
-			  xply_word y) {
+static void
+xrab_polymult(xply_word *php, xply_word *plp, xply_word x, xply_word y)
+{
 	int i;
 	xply_word ph = 0, pl = 0;
 
 	if (x & 1)
 		pl = y;
 	for (i = 1; i < XPLYW_BITS; i++)
-		if (x & (((xply_word) 1) << i)) {
+		if (x & (((xply_word)1) << i)) {
 			ph ^= y >> (XPLYW_BITS - i);
 			pl ^= y << i;
 		}
@@ -155,7 +154,9 @@ static void xrab_polymult(xply_word *php, xply_word *plp, xply_word x,
 		*plp = pl;
 }
 
-static xply_word xrab_polymmult(xply_word x, xply_word y, xply_word d) {
+static xply_word
+xrab_polymmult(xply_word x, xply_word y, xply_word d)
+{
 	xply_word h, l;
 
 	xrab_polymult(&h, &l, x, y);
@@ -163,7 +164,9 @@ static xply_word xrab_polymmult(xply_word x, xply_word y, xply_word d) {
 	return xrab_polymod(h, l, d);
 }
 
-static int xrab_polyirreducible(xply_word f) {
+static int
+xrab_polyirreducible(xply_word f)
+{
 	xply_word u = 2;
 	int i, m = (xrab_fls(f) - 1) >> 1;
 
@@ -176,21 +179,25 @@ static int xrab_polyirreducible(xply_word f) {
 	return 1;
 }
 
-static void xrab_rndgen(xply_word *f) {
+static void
+xrab_rndgen(xply_word *f)
+{
 	unsigned int i;
 	xply_word g;
 
 	for (i = 0, g = 0; i < sizeof(xply_word); i++)
-		g ^= (g << 11) + (unsigned int) rand() + (g >> 7);
+		g ^= (g << 11) + (unsigned int)rand() + (g >> 7);
 	*f = g;
 }
 
-static int xrab_polygen(int degree, xply_word *ply) {
+static int
+xrab_polygen(int degree, xply_word *ply)
+{
 	xply_word msb, mask, f;
 
 	if (degree <= 0 || degree >= XPLYW_BITS)
 		return -1;
-	msb = ((xply_word) 1) << degree;
+	msb = ((xply_word)1) << degree;
 	mask = msb - 1;
 	srand(time(NULL));
 	do {
@@ -202,7 +209,9 @@ static int xrab_polygen(int degree, xply_word *ply) {
 	return 0;
 }
 
-static int xarb_calc_tu(xply_word poly, int size, xply_word *t, xply_word *u) {
+static int
+xarb_calc_tu(xply_word poly, int size, xply_word *t, xply_word *u)
+{
 	int j, xshift, shift;
 	xply_word t1, ssh;
 
@@ -210,9 +219,9 @@ static int xarb_calc_tu(xply_word poly, int size, xply_word *t, xply_word *u) {
 	shift = xshift - 8;
 	if (shift < 0)
 		return -1;
-	t1 = xrab_polymod(0, ((xply_word) 1) << xshift, poly);
+	t1 = xrab_polymod(0, ((xply_word)1) << xshift, poly);
 	for (j = 0; j < 256; j++)
-		t[j] = xrab_polymmult(j, t1, poly) | ((xply_word) j << xshift);
+		t[j] = xrab_polymmult(j, t1, poly) | ((xply_word)j << xshift);
 	for (j = 1, ssh = 1; j < size; j++)
 		ssh = (ssh << 8) ^ t[ssh >> shift];
 	for (j = 0; j < 256; j++)
@@ -221,7 +230,9 @@ static int xarb_calc_tu(xply_word poly, int size, xply_word *t, xply_word *u) {
 	return 0;
 }
 
-int main(int ac, char **av) {
+int
+main(int ac, char **av)
+{
 	int i, size = 20, degree = 0, shift;
 	xply_word ply = 0, t[256], u[256];
 
@@ -231,24 +242,26 @@ int main(int ac, char **av) {
 				size = atol(av[i]);
 		} else if (strcmp(av[i], "-p") == 0) {
 			if (++i < ac)
-				ply = (xply_word) strtoll(av[i], NULL, 16);
+				ply = (xply_word)strtoll(av[i], NULL, 16);
 		} else if (strcmp(av[i], "-d") == 0) {
 			if (++i < ac)
 				degree = atol(av[i]);
 		}
 	}
 	if (degree && (degree < 8 || degree >= XPLYW_BITS)) {
-		fprintf(stderr, "degree (%d) out of bound for the poly word size (8..%u)\n",
-			degree, XPLYW_BITS);
+		fprintf(stderr,
+		        "degree (%d) out of bound for the poly word size (8..%u)\n",
+		        degree, XPLYW_BITS);
 		return 1;
 	}
 	if (degree == 0)
-		for (degree = XPLYW_BITS - 1; !xrab_isprime(degree); degree--);
+		for (degree = XPLYW_BITS - 1; !xrab_isprime(degree); degree--)
+			;
 	if (ply == 0 && xrab_polygen(degree, &ply) < 0)
 		return 2;
 	shift = (xrab_fls(ply) - 1) - 8;
-	fprintf(stderr, "found poly = " XRAB_WORD_PFMT "  (shift %d)\n",
-		ply, shift);
+	fprintf(stderr, "found poly = " XRAB_WORD_PFMT "  (shift %d)\n", ply,
+	        shift);
 	if (xarb_calc_tu(ply, size, t, u) < 0)
 		return 3;
 
@@ -257,10 +270,11 @@ int main(int ac, char **av) {
 	fprintf(stdout, "#define XV%d(v) ((xply_word) v ## ULL)\n", XPLYW_BITS);
 	fprintf(stdout, "#endif\n\n");
 	fprintf(stdout, "#define XRAB_ROOTPOLY XV%d(" XRAB_WORD_PFMT ")\n\n",
-		XPLYW_BITS, ply);
+	        XPLYW_BITS, ply);
 	fprintf(stdout, "#define XRAB_SHIFT %d\n", shift);
 	fprintf(stdout, "#define XRAB_WNDSIZE %d\n\n", size);
-	fprintf(stdout, "typedef unsigned XRABPLY_TYPE%d xply_word;\n\n", XPLYW_BITS);
+	fprintf(stdout, "typedef unsigned XRABPLY_TYPE%d xply_word;\n\n",
+	        XPLYW_BITS);
 	fprintf(stdout, "static const xply_word T[256] = {\n");
 	for (i = 0; i < 256; i++) {
 		if (i) {
@@ -289,8 +303,8 @@ int main(int ac, char **av) {
 	}
 	fprintf(stdout, "\n};\n\n");
 
-	fprintf(stdout, "#endif /* if defined(XRABPLY_TYPE%d) */\n\n", XPLYW_BITS);
+	fprintf(stdout, "#endif /* if defined(XRABPLY_TYPE%d) */\n\n",
+	        XPLYW_BITS);
 
 	return 0;
 }
-

@@ -23,18 +23,12 @@
 #if !defined(XBDIFF_H)
 #define XBDIFF_H
 
-
 #define XDL_BPATCH_HDR_SIZE (4 + 4)
 #define XDL_MIN_BLKSIZE 16
 #define XDL_INSBOP_SIZE (1 + 4)
 #define XDL_COPYOP_SIZE (1 + 4 + 4)
 
-
-
 unsigned long xdl_mmb_adler32(mmbuffer_t *mmb);
 unsigned long xdl_mmf_adler32(mmfile_t *mmf);
 
-
-
 #endif /* #if !defined(XBDIFF_H) */
-
