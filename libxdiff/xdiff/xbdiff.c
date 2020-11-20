@@ -126,7 +126,7 @@ int
 xdl_bdiff_mb(mmbuffer_t *mmb1, mmbuffer_t *mmb2, bdiffparam_t const *bdp,
              xdemitcb_t *ecb)
 {
-	long i, rsize, size, bsize, csize, msize, moff;
+	long i, rsize, size, bsize, csize, msize, moff = 0;
 	unsigned long fp;
 	char const *blk, *base, *data, *top, *ptr1, *ptr2;
 	bdrecord_t *brec;

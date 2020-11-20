@@ -208,7 +208,7 @@ xdl_split(unsigned long const *ha1, long off1, long lim1,
 		 * the furthest reaching path using the (i1 + i2) measure.
 		 */
 		if (ec >= xenv->mxcost) {
-			long fbest, fbest1, bbest, bbest1;
+			long fbest, fbest1 = 0, bbest, bbest1 = 0;
 
 			fbest = -1;
 			for (d = fmax; d >= fmin; d -= 2) {

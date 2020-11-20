@@ -337,7 +337,7 @@ static int
 xdl_hunk_match(recfile_t *rf, long irec, patch_t *pch, int mode, int fuzz)
 {
 	long i, j, z, fsize, psize, ptop, pfuzz, sfuzz, misses;
-	char const *fline, *pline;
+	char const *fline, *pline = NULL;
 
 	/*
 	 * Limit fuzz to not be greater than the prefix and suffix context.
