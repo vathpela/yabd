@@ -36,30 +36,50 @@ LDFLAGS := -Wl,--add-needed \
 	   -Wl,-z,relro
 
 BINTARGETS = bindiff
-TARGETS = $(BINTARGETS)
+TARGETS = libxdiff $(BINTARGETS)
 
 all: $(TARGETS)
 
+% : | libxdiff.a
 % : %.c $(wildcard iquote/*.h %.h)
 	$(CC) \
-		$(CFLAGS) \
+		$(CFLAGS) -Ilibxdiff/xdiff/ \
 		$(LDFLAGS) \
-		-o $@ $(filter %.c,$^)
+		-o $@ $(filter %.c,$^) \
+		libxdiff/build/libxdiff.a
 
 %.C : | $(wildcard *.h iquote/*.h)
 %.C : %.c
-	$(CC) $(CFLAGS) -E -o $@ $(filter %.c,$^)
+	$(CC) $(CFLAGS) -Ilibxdiff/xdiff/ -E -o $@ $(filter %.c,$^)
 
 $(wildcard *.c) : | $(wildcard *.h iquote/*.h)
 
-bindiff : $(wildcard *.c *.h iquote/%.h)
+bindiff : | libxdiff
+bindiff : $(wildcard *.c *.h iquote/%.h) iquote/hexdump.h
 
+.ONESHELL:
+libxdiff :
+	@ :;
+	set -eu
+	export PREFIX=/usr
+	export CFLAGS="-Og -g3 -std=gnu11 -Wall -Wextra -Wno-missing-field-initializers -Wno-nonnull -Wno-unused-parameter -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unsed-const-variable -Wno-unused-function -Wno-unused -Werror -I$${PWD}"
+	export CC="$(CC)"
+	if ! [[ -f libxdiff/build/libxdiff.a ]] ; then
+		mkdir -p libxdiff/build
+		cd libxdiff/build
+		if ! [[ -f Makefile ]] ; then
+			cmake ..
+		fi
+		$(MAKE) CMAKE_INSTALL_PREFIX=/usr PREFIX=/usr VERBOSE=1 clean all
+		cd -
+	fi
 
 clean :
 	@rm -vf $(BINTARGETS) $(wildcard *.C)
+	rm -rfv libxdiff/build/
 
 include iquote/scan-build.mk
 
-.PHONY: clean all
+.PHONY: clean all libxdiff
 
 # vim:ft=make
