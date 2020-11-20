@@ -19,15 +19,22 @@
 #include <string.h>
 #include <sys/cdefs.h>
 #include <sys/param.h>
+#include <sys/uio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <termios.h>
 #include <unistd.h>
 
 extern int verbose;
 
 #include "compiler.h"
+
+#include "color.h"
 #include "debug.h"
+#include "hexdump.h"
 #include "math.h"
 #include "time.h"
-#include "hexdump.h"
+#include "tty.h"
 
 #endif /* !BINDIFF_H_ */
 // vim:fenc=utf-8:tw=75:noet
