@@ -9,6 +9,20 @@
 #include <getopt.h>
 #include <xdiff.h>
 
+struct palette {
+	struct color normal;
+	struct color delete;
+	struct color copy;
+	struct color insert;
+};
+
+static struct palette palette = {
+	.normal = { .attr = no_attr_change, .bg = white, .fg = black },
+	.delete = { .attr = no_attr_change, .bg = white, .fg = red },
+	.copy = { .attr = no_attr_change, .bg = white, .fg = blue },
+	.insert = { .attr = no_attr_change, .bg = white, .fg = green },
+};
+
 int verbose = 1;
 
 static void NORETURN
@@ -88,9 +102,9 @@ put_map(int fd, mmbuffer_t *mmb)
 }
 
 struct hunk {
+	struct color *color;
 	hexdiff_op_t op;
 	size_t apos, bpos;
-	off_t aoff, boff;
 	char *buf;
 	size_t sz;
 };
@@ -118,7 +132,7 @@ find(const char *line, long line_len, char *buf, long bufsz, void *priv)
 	 (((uint64_t)(val)) < (((uint64_t)(start)) + ((uint64_t)(size)))))
 
 static void
-add_hunk(struct priv *priv, hexdiff_op_t op, off_t aoff, off_t boff, char *buf,
+add_hunk(struct priv *priv, hexdiff_op_t op, off_t apos, off_t bpos, char *buf,
          size_t sz)
 {
 	struct hunk *hunk;
@@ -139,10 +153,35 @@ add_hunk(struct priv *priv, hexdiff_op_t op, off_t aoff, off_t boff, char *buf,
 	hunk->op = op;
 	hunk->buf = buf;
 	hunk->sz = sz;
-	hunk->apos = priv->apos;
-	hunk->bpos = priv->bpos;
-	hunk->aoff = aoff;
-	hunk->boff = boff;
+	switch (op) {
+	case DELETE:
+		hunk->color = &palette.delete;
+		hunk->apos = apos;
+		priv->apos = apos + sz;
+		hunk->bpos = bpos;
+		debug("DELETE apos:0x%08lx->0x%08lx bpos:0x%08lx->0x%08lx", hunk->apos,
+		      priv->apos, hunk->bpos, priv->bpos);
+		break;
+	case COPY:
+		hunk->color = &palette.copy;
+		hunk->apos = apos;
+		priv->apos = apos + sz;
+		hunk->bpos = bpos;
+		priv->bpos = bpos + sz;
+		debug("  COPY apos:0x%08lx->0x%08lx bpos:0x%08lx->0x%08lx", hunk->apos,
+		      priv->apos, hunk->bpos, priv->bpos);
+		break;
+	case INSERT:
+		hunk->color = &palette.insert;
+		hunk->apos = apos;
+		hunk->bpos = bpos;
+		priv->bpos = bpos + sz;
+		debug("INSERT apos:0x%08lx->0x%08lx bpos:0x%08lx->0x%08lx", hunk->apos,
+		      priv->apos, hunk->bpos, priv->bpos);
+		break;
+	case IGNORE:
+		break;
+	}
 }
 
 static int
@@ -152,15 +191,15 @@ collect_insert(struct priv *priv, char *buf, size_t sz)
 	      inside(buf, priv->mmb1->ptr, priv->mmb1->size)   ? "mmb1"
 	      : inside(buf, priv->mmb2->ptr, priv->mmb2->size) ? "mmb2"
 	                                                       : "????");
-	off_t aoff = -1, boff = -1;
+	size_t apos = priv->apos, bpos = priv->bpos;
 	if (inside(buf, priv->mmb1->ptr, priv->mmb1->size)) {
-		aoff = buf - priv->mmb1->ptr;
+		apos = buf - priv->mmb1->ptr;
 	} else if (inside(buf, priv->mmb2->ptr, priv->mmb2->size)) {
-		boff = buf - priv->mmb2->ptr;
+		bpos = buf - priv->mmb2->ptr;
 	}
 	//debug("priv:%p", priv);
 	//add_hunk(priv, IGNORE, -1, -1, NULL, 0);
-	add_hunk(priv, INSERT, aoff, boff, buf, sz);
+	add_hunk(priv, INSERT, apos, bpos, buf, sz);
 	return 0;
 }
 
@@ -170,10 +209,13 @@ collect_copy(struct priv *priv, size_t off, size_t sz)
 	debug("copy 0x%zx-0x%zx (0x%lx)", off, off + sz, sz);
 	//debug("priv:%p", priv);
 	//add_hunk(priv, IGNORE, NULL, 0);
-	off_t aoff, boff = -1;
-	aoff = off;
-	add_hunk(priv, COPY, aoff, boff, priv->mmb1->ptr + priv->apos + off,
-	         sz);
+	size_t apos = off;
+	if (apos > priv->apos) {
+		add_hunk(priv, DELETE, priv->apos, priv->bpos,
+			 priv->mmb1->ptr + priv->apos, apos - priv->apos);
+	}
+	add_hunk(priv, COPY, apos, priv->bpos,
+		 priv->mmb1->ptr + apos + off, sz);
 	return 0;
 }
 
@@ -202,25 +244,33 @@ collect(void *privp, mmbuffer_t *mmbuf, size_t count)
 		size_t sz = mmbuf[i].size;
 		size_t off;
 
+#if 0
 		dprintf("mmbuf[%zd]: { %p-%p (0x%02lx) } ", i, p, p + sz - 1,
 		        sz);
+#endif
 		if (sz < 1)
 			errx(3, "op size is %zd", sz);
+#if 0
 		dprintf("prev = 0x%x (%s) ", prev,
 		        prev == XDL_BDOP_INS ? "XDL_BDOP_INS" : "NOOP");
+#endif
 		switch (prev) {
 		case XDL_BDOP_INS:
 			prev = 0;
+#if 0
 			dprintf("\n");
 			dhexdumpf("              ", p, sz);
+#endif
 			return collect_insert(priv, p, sz);
 			break;
 		default:
+#if 0
 			dprintf("op = 0x%x (%s)\n", p[0],
 			        p[0] == XDL_BDOP_INSB  ? "XDL_BDOP_INSB"
 			        : p[0] == XDL_BDOP_INS ? "XDL_BDOP_INS"
 			        : p[0] == XDL_BDOP_CPY ? "XDL_BDOP_CPY"
 			                               : "UNKNOWN");
+#endif
 			switch (p[0]) {
 			case XDL_BDOP_INSB:
 				return collect_insert(priv, &p[1], 1);
@@ -259,42 +309,73 @@ process_diff(struct priv *priv)
 {
 	for (size_t i = 0; i < priv->n_hunks; i++) {
 		struct hunk *thishunk = &priv->hunks[i];
+		struct hunk tmp;
+
+
 		if (i + 1 < priv->n_hunks) {
 			struct hunk *nexthunk = &priv->hunks[i + 1];
-			if (nexthunk->op == COPY && nexthunk->aoff != -1) {
-				debug("thishunk: apos:0x%lx bpos:0x%lx aoff:0x%lx boff:0x%lx",
-				      thishunk->apos, thishunk->bpos,
-				      thishunk->aoff, thishunk->boff);
-				debug("nexthunk: apos:0x%lx bpos:0x%lx aoff:0x%lx boff:0x%lx",
-				      nexthunk->apos, nexthunk->bpos,
-				      nexthunk->aoff, nexthunk->boff);
+
+			if (thishunk->op == INSERT && nexthunk->op == DELETE &&
+			    thishunk->apos == nexthunk->apos) {
+				memcpy(&tmp, nexthunk, sizeof(tmp));
+				memcpy(nexthunk, thishunk, sizeof(tmp));
+				memcpy(thishunk, &tmp, sizeof(tmp));
+				//i += 1;
 			}
+			debug("thishunk:%s apos:0x%08lx bpos:0x%08lx nexthunk:%s apos:0x%08lx bpos:0x%08lx",
+			      thishunk->op == DELETE ? "DELETE" :
+			      thishunk->op == COPY ? "  COPY" :
+			      thishunk->op == INSERT ? "INSERT" :
+			      "????",
+			      thishunk->apos, thishunk->bpos,
+			      nexthunk->op == DELETE ? "DELETE" :
+			      nexthunk->op == COPY ? "  COPY" :
+			      nexthunk->op == INSERT ? "INSERT" :
+			      "????",
+			      nexthunk->apos, nexthunk->bpos);
+
+		} else {
+			debug("thishunk:%s apos:0x%08lx bpos:0x%08lx",
+			      thishunk->op == DELETE ? "DELETE" :
+			      thishunk->op == COPY ? "  COPY" :
+			      thishunk->op == INSERT ? "INSERT" :
+			      "????",
+			      thishunk->apos, thishunk->bpos);
 		}
 	}
 }
-
-struct palette {
-	struct color normal;
-	struct color delete;
-	struct color copy;
-	struct color insert;
-};
-
-struct palette palette = {
-	.normal = { .attr = no_attr_change, .bg = white, .fg = black },
-	.delete = { .attr = no_attr_change, .bg = white, .fg = black },
-	.copy = { .attr = no_attr_change, .bg = white, .fg = black },
-	.insert = { .attr = no_attr_change, .bg = white, .fg = black },
-};
 
 static void
 emit_diff(struct priv *priv)
 {
 	for (size_t i = 0; i < priv->n_hunks; i++) {
 		struct hunk *hunk = &priv->hunks[i];
+		size_t apos, bpos;
+		switch (hunk->op) {
+		case DELETE:
+			apos = hunk->apos;
+			bpos = 0xffffffff;
+			debug("DELETE apos:0x%08lx bpos:0x%08lx sz:0x%08lx",
+			      apos, bpos, hunk->sz);
+			break;
+		case COPY:
+			apos = hunk->apos;
+			bpos = hunk->bpos;
+			debug("  COPY apos:0x%08lx bpos:0x%08lx sz:0x%08lx",
+			      apos, bpos, hunk->sz);
+			break;
+		case INSERT:
+			apos = 0xffffffff;
+			bpos = hunk->bpos;
+			debug("INSERT apos:0x%08lx bpos:0x%08lx sz:0x%08lx",
+			      apos, bpos, hunk->sz);
+			break;
+		default:
+			break;
+		}
 
-		hexdiff(hunk->op, &priv->apos, &priv->bpos, hunk->buf,
-		        hunk->sz);
+		hexdiff(hunk->op, &apos, &bpos, hunk->buf, hunk->sz,
+			hunk->color->fg);
 	}
 	//hexdiff(COPY, &priv->apos, &priv->bpos, priv->mmb1->ptr+priv->apos+off, sz);
 	//hexdiff(INSERT, &priv->apos, &priv->bpos, buf, sz);
