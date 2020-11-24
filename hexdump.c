@@ -117,13 +117,19 @@ prepare_text(void *data, size_t size, char *buf, size_t bufsz,
 	for (j = 0; j < 16 - after - before; j++) {
 		sz = snprintf(HDBUF, HDLIM, "%c",
 			      isprint(((uint8_t *)data)[j]) ? ((uint8_t *)data)[j] : '.');
+		if (sz < 0)
+			return sz;
+		off += sz;
 	}
-	if (highlight == regular) {
-		sz = snprintf(HDBUF, HDLIM, "%c", size > 0 ? '|' : ' ');
-	} else {
-		sz = snprintf(HDBUF, HDLIM, "\033[38:5:%dm%c",
-			      size > 0 ? '|' : ' ', regular);
+
+	if (highlight != regular) {
+		sz = snprintf(HDBUF, HDLIM, "\033[38:5:%dm", regular);
+		if (sz < 0)
+			return sz;
+		off += sz;
 	}
+
+	sz = snprintf(HDBUF, HDLIM, "%c", size > 0 ? '|' : ' ');
 	if (sz < 0)
 		return sz;
 	off += sz;
@@ -228,6 +234,7 @@ dhexdumpat(void *data, size_t size, size_t at)
 
 /*
  * variadic hexdiff-to-file, formatted
+ * emits one diff op
  * think of it as: fprintf(f, %s%s\n", vformat(fmt, ap), hexdiff(op, opos, apos, data, size));
  */
 void
@@ -242,85 +249,77 @@ vfhexdifff(FILE *f, const char *const fmt, va_list ap, hexdiff_op_t op,
 		debug("data:%p size:%zd opos:0x%zx npos:0x%zx color:%d\n", data, size,
 		      *opos, *npos, fg);
 	while (offset < size) {
-		char hexbuf[69];
-		char txtbuf[39];
+		char linebuf[4096];
 		ssize_t sz = 0;
 		size_t tmpsz = 0;
 		size_t consumed = 0;
 
 		switch (op) {
 		case DELETE:
-			//tmpsz = snprintf(hexbuf, sizeof(hexbuf), "\033[38:5:%dm", fg);
 			sz = prepare_hex(data + offset, size - offset, &consumed,
-					 hexbuf + tmpsz, sizeof(hexbuf) - tmpsz,
+					 linebuf + tmpsz, sizeof(linebuf) - tmpsz,
 					 *opos, 0);
 			debug("prepare_hex(%p, %zd, %zd, %p, %zd, %zd, %zd) = %zd",
 			      data + offset, size - offset, consumed,
-			      hexbuf + tmpsz, sizeof(hexbuf) - tmpsz,
+			      linebuf + tmpsz, sizeof(linebuf) - tmpsz,
 			      *opos, (size_t)0, sz);
-			if (sz < 0)
-				break;
 			if (consumed == 0)
 				break;
+			if (sz < 0)
+				break;
 			tmpsz += sz;
-			//snprintf(hexbuf + tmpsz, sizeof(hexbuf) - tmpsz,
-			//	 "\033[38:5:%dm", black);
+			sz = snprintf(linebuf + tmpsz, sizeof(linebuf) - tmpsz,
+				      "\033[38:5:%dm", black);
 
-			//tmpsz = snprintf(txtbuf, sizeof(txtbuf), "\033[38:5:%dm", fg);
+			tmpsz += snprintf(linebuf + tmpsz, sizeof(linebuf) - tmpsz, "  ");
 			tmpsz += prepare_text(data + offset, size - offset,
-					      txtbuf + tmpsz, sizeof(txtbuf) - tmpsz,
+					      linebuf + tmpsz, sizeof(linebuf) - tmpsz,
 					      *opos, 0, fg, black);
-			//snprintf(txtbuf + tmpsz, sizeof(txtbuf) - tmpsz,
-			//	 "\033[38:5:%dm", black);
 
 			vfprintf(f, fmt, ap);
-			fprintf(f, "%c\033[38:5:%dm%08lx\033[38:5%dm",
-				opc[op], fg, *opos, black);
-			fprintf(f, "  %s  %s\n", hexbuf, txtbuf);
+			fprintf(f, "%c\033[38:5:%dm%08lx  %s\n",
+				opc[op], fg, *opos, linebuf);
 			break;
 		case COPY:
 			sz = prepare_hex(data + offset, size - offset, &consumed,
-					 hexbuf + tmpsz, sizeof(hexbuf) - tmpsz,
+					 linebuf + tmpsz, sizeof(linebuf) - tmpsz,
 					 *npos, 0);
 			debug("prepare_hex(%p, %zd, %zd, %p, %zd, %zd, %zd) = %zd",
 			      data + offset, size - offset, consumed,
-			      hexbuf + tmpsz, sizeof(hexbuf) - tmpsz,
+			      linebuf + tmpsz, sizeof(linebuf) - tmpsz,
 			      *npos, (size_t)0, sz);
-			if (sz == 0)
+			if (sz < 0)
 				break;
-
+			tmpsz += sz;
+			tmpsz += snprintf(linebuf + tmpsz, sizeof(linebuf) - tmpsz, "  ");
 			prepare_text(data + offset, size - offset,
-				     txtbuf, sizeof(txtbuf), *npos, 0,
-				     fg, black);
+				     linebuf + tmpsz, sizeof(linebuf) - tmpsz, *npos, 0,
+				     *opos == *npos ? black : fg, black);
 			vfprintf(f, fmt, ap);
-			fprintf(f, "%c\033[38:5:%dm%08lx\033[38:5:%dm",
-				opc[op], *opos == *npos ? black : fg, *npos, black);
-			fprintf(f, "  %s  %s\n",  hexbuf, txtbuf);
+			fprintf(f, "%c\033[38:5:%dm%08lx  %s\n",
+				opc[op], *opos == *npos ? black : fg, *npos, linebuf);
 			break;
 		case INSERT:
-			//tmpsz = snprintf(hexbuf, sizeof(hexbuf), "\033[38:5:%dm", fg);
 			sz = prepare_hex(data + offset, size - offset, &consumed,
-					 hexbuf + tmpsz, sizeof(hexbuf) - tmpsz,
+					 linebuf + tmpsz, sizeof(linebuf) - tmpsz,
 			                 *npos, 0);
 			debug("prepare_hex(%p, %zd, %zd, %p, %zd, %zd, %zd) = %zd",
 			      data + offset, size - offset, consumed,
-			      hexbuf + tmpsz, sizeof(hexbuf) - tmpsz,
+			      linebuf + tmpsz, sizeof(linebuf) - tmpsz,
 			      *npos, (size_t)0, sz);
 			if (consumed == 0)
 				break;
-			//snprintf(hexbuf + tmpsz, sizeof(hexbuf) - tmpsz,
-			//	 "\033[38:5:%dm", black);
-
-			//tmpsz = snprintf(txtbuf, sizeof(txtbuf), "\033[38:5:%dm", fg);
+			if (sz < 0)
+				break;
+			tmpsz += sz;
+			tmpsz += snprintf(linebuf + tmpsz, sizeof(linebuf) - tmpsz,
+					  "  \033[38:5:%dm", black);
 			tmpsz += prepare_text(data + offset, size - offset,
-					      txtbuf + tmpsz, sizeof(txtbuf) - tmpsz,
+					      linebuf + tmpsz, sizeof(linebuf) - tmpsz,
 					      *npos, 0, fg, black);
-			//tmpsz = snprintf(txtbuf + tmpsz, sizeof(txtbuf) - tmpsz,
-			//		 "\033[38:5:%dm", black);
-
 			vfprintf(f, fmt, ap);
-			fprintf(f, "%c\033[38:5:%dm%08lx\033[38:5:%dm", opc[op], fg, *npos, black);
-			fprintf(f, "  %s  %s\n", hexbuf, txtbuf);
+			fprintf(f, "%c\033[38:5:%dm%08lx  %s\n",
+				opc[op], fg, *npos, linebuf);
 			break;
 		case IGNORE:
 			continue;
@@ -380,6 +379,5 @@ hexdiff(hexdiff_op_t op, uint64_t *opos, uint64_t *npos, void *data, size_t sz,
 	}
 	hexdebug = false;
 }
-
 
 // vim:fenc=utf-8:tw=75:noet
