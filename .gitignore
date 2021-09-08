@@ -2,6 +2,7 @@
 .*.h.P
 .*.d
 .*.sw?
+.cache/
 .sw?
 .syntastic*
 *~
@@ -20,6 +21,7 @@
 *.tar.*
 *.var
 bindiff
+compile_commands.json
 core.*
 cov-int
 sbat*
