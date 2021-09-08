@@ -19,13 +19,9 @@ CFLAGS += $(OPTIMIZE) \
 	  -Wno-unused-parameter \
 	  -Werror \
 	  -Wno-error=sign-compare \
-	  -Wno-error=unused-but-set-variable \
-	  -Wno-error=unused-const-variable \
-	  -Wno-error=unused-variable \
-	  -Wno-error=unused-function \
-	  -Wno-unused-variable \
-	  -Wno-unused-const-variable \
-	  -Wno-unused-function
+	  -Wno-error=unused \
+	  -Wno-ignored-attributes \
+	  -Wno-unused
 
 LDFLAGS := -Wl,--add-needed \
 	   -Wl,--build-id \
@@ -62,7 +58,7 @@ libxdiff :
 	@ :;
 	set -eu
 	export PREFIX=/usr
-	export CFLAGS="-Og -g3 -std=gnu11 -Wall -Wextra -Wno-missing-field-initializers -Wno-nonnull -Wno-unused-parameter -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unsed-const-variable -Wno-unused-function -Wno-unused -Werror -I$${PWD}"
+	export CFLAGS="-Og -g3 -std=gnu11 -Wall -Wextra -Wno-missing-field-initializers -Wno-nonnull -Wno-unused-parameter -Wno-sign-compare -Wno-unused -Wno-ignored-attributes -Werror -I$${PWD}"
 	export CC="$(CC)"
 	if ! [[ -f libxdiff/build/libxdiff.a ]] ; then
 		mkdir -p libxdiff/build

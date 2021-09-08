@@ -30,11 +30,16 @@ usage(int ret)
 {
 	FILE *out = ret == 0 ? stdout : stderr;
 	fprintf(out,
-	        "Usage: %s [OPTION...] FILE FILE\n"
-	        "Help options:\n"
-	        "  -?, --help                        Show this help message\n"
-	        "      --usage                       Display brief usage message\n",
-	        program_invocation_short_name);
+		"Usage: %s [OPTION...] FILE FILE\n"
+		"Help options:\n"
+		"  -d DIFFER, --differ DIFFER        Use DIFFER diff algorithm\n"
+		"                                    \"list\" shows options,\n"
+		"                                    * denotes the default\n"
+		"  -q                                Be less verbose\n"
+		"  -v                                Be more verbose\n"
+		"  -?, --help                        Show this help message\n"
+		"      --usage                       Display brief usage message\n",
+		program_invocation_short_name);
 	exit(ret);
 }
 
@@ -70,7 +75,18 @@ get_map(const char *const filename, int *fd, mmbuffer_t *mmb)
 		mmb->ptr =
 			mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, *fd, 0);
 		if (mmb->ptr == MAP_FAILED) {
-			rc = -1;
+			mmb->ptr = calloc(1, mmb->size);
+			if (mmb->ptr == NULL) {
+				rc = -1;
+			} else {
+				sz = 0;
+				while (sz >= 0 && (size_t)sz < mmb->size) {
+					rc = read(*fd, &mmb->ptr[sz], mmb->size - sz);
+					if (rc < 0)
+						break;
+					sz += rc;
+				}
+			}
 		}
 	}
 	if (rc < 0) {
@@ -101,24 +117,6 @@ put_map(int fd, mmbuffer_t *mmb)
 	close(fd);
 }
 
-struct hunk {
-	struct color *color;
-	hexdiff_op_t op;
-	size_t apos, bpos;
-	char *buf;
-	size_t sz;
-};
-
-struct priv {
-	char *files[2];
-	mmbuffer_t *mmb1, *mmb2;
-	bool first;
-	size_t apos, bpos, opos;
-	struct hunk *hunks;
-	size_t n_hunks;
-	size_t n_hunk_bufs;
-};
-
 static long
 find(const char *line, long line_len, char *buf, long bufsz, void *priv)
 {
@@ -127,9 +125,45 @@ find(const char *line, long line_len, char *buf, long bufsz, void *priv)
 	return 0;
 }
 
+static size_t
+count_diffs(const char *buf0, const char *buf1, const size_t sz)
+{
+	size_t flips = 0;
+	bool wasdiff = false;
+	bool flipped = false;
+
+	for (size_t i = 0; i < sz; i++) {
+		bool isdiff = buf0[i] != buf1[i];
+		if (wasdiff != isdiff)
+			flips += 1;
+		wasdiff = isdiff;
+	}
+
+	return flips;
+}
+
 #define inside(val, start, size)                       \
 	((((uint64_t)(val)) >= ((uint64_t)(start))) && \
 	 (((uint64_t)(val)) < (((uint64_t)(start)) + ((uint64_t)(size)))))
+
+struct hunk {
+        struct color *color;
+        hexdiff_op_t op;
+        size_t apos, bpos;
+        char *buf;
+        size_t sz;
+};
+
+struct priv {
+	char *files[2];
+	mmbuffer_t *mmb1, *mmb2;
+	size_t apos, bpos;
+	bool first;
+	size_t opos;
+	struct hunk *hunks;
+	size_t n_hunks;
+	size_t n_hunk_bufs;
+};
 
 static void
 add_hunk(struct priv *priv, hexdiff_op_t op, off_t apos, off_t bpos, char *buf,
@@ -187,16 +221,24 @@ add_hunk(struct priv *priv, hexdiff_op_t op, off_t apos, off_t bpos, char *buf,
 static int
 collect_insert(struct priv *priv, char *buf, size_t sz)
 {
-	debug("insert %p-%p (0x%lx) (from %s)", buf, buf + sz - 1, sz,
-	      inside(buf, priv->mmb1->ptr, priv->mmb1->size)   ? "mmb1"
-	      : inside(buf, priv->mmb2->ptr, priv->mmb2->size) ? "mmb2"
+#if 0
+	debug("insert %p-%p (0x%lx) from:%s", buf, buf + sz - 1, sz,
+	      inside(buf, priv->mmb1->ptr, priv->mmb1->size)   ? priv->files[0]
+	      : inside(buf, priv->mmb2->ptr, priv->mmb2->size) ? priv->files[1]
 	                                                       : "????");
+#endif
 	size_t apos = priv->apos, bpos = priv->bpos;
 	if (inside(buf, priv->mmb1->ptr, priv->mmb1->size)) {
 		apos = buf - priv->mmb1->ptr;
 	} else if (inside(buf, priv->mmb2->ptr, priv->mmb2->size)) {
 		bpos = buf - priv->mmb2->ptr;
 	}
+	debug("insert 0x%zx-0x%zx (0x%lx) from:%s",
+	      apos, bpos, sz,
+	      inside(buf, priv->mmb1->ptr, priv->mmb1->size)   ? priv->files[0]
+	      : inside(buf, priv->mmb2->ptr, priv->mmb2->size) ? priv->files[1]
+	                                                       : "????");
+
 	//debug("priv:%p", priv);
 	//add_hunk(priv, IGNORE, -1, -1, NULL, 0);
 	add_hunk(priv, INSERT, apos, bpos, buf, sz);
@@ -206,7 +248,8 @@ collect_insert(struct priv *priv, char *buf, size_t sz)
 static int
 collect_copy(struct priv *priv, size_t off, size_t sz)
 {
-	debug("copy 0x%zx-0x%zx (0x%lx)", off, off + sz, sz);
+	debug("copy 0x%zx-0x%zx (0x%lx) from:%s", off, off + sz, sz,
+	      priv->files[0]);
 	//debug("priv:%p", priv);
 	//add_hunk(priv, IGNORE, NULL, 0);
 	size_t apos = off;
@@ -239,6 +282,11 @@ collect(void *privp, mmbuffer_t *mmbuf, size_t count)
 		return 0;
 	}
 
+	/*
+	 * for each transaction, we get either a direct or indirect
+	 * operation.  Indirect operations are always XDL_BDOP_INS followed
+	 * by a second one
+	 */
 	for (size_t i = 0; i < count; i++) {
 		char *p = mmbuf[i].ptr;
 		size_t sz = mmbuf[i].size;
@@ -416,9 +464,10 @@ do_diff(char *file[2], mmbuffer_t *mmb1, mmbuffer_t *mmb2)
 int
 main(int argc, char *argv[])
 {
-	char *sopts = "v?";
+	char *sopts = "qduv?";
 	struct option lopts[] = { { "help", no_argument, 0, '?' },
 		                  { "quiet", no_argument, 0, 'q' },
+				  { "differ", required_argument, 0, 'd' },
 		                  { "unified", no_argument, 0, 'u' },
 		                  { "usage", no_argument, 0, 0 },
 		                  { "verbose", no_argument, 0, 'v' },
@@ -428,6 +477,7 @@ main(int argc, char *argv[])
 	char *files[] = { NULL, NULL };
 	int fds[] = { -1, -1 };
 	int rc;
+	struct differ *differ = NULL;
 	mmbuffer_t mmb1 = { 0, }, mmb2 = { 0, };
 
 	while ((c = getopt_long(argc, argv, sopts, lopts, &i)) != -1) {
@@ -438,6 +488,19 @@ main(int argc, char *argv[])
 			if (verbose < 0)
 				verbose = 0;
 			break;
+		case 'd':
+			if (!strcmp(optarg, "xbdiff")) {
+				differ = &xbdiff;
+			} else if (!strcmp(optarg, "xrabdiff")) {
+				differ = &xrabdiff;
+			} else if (!strcmp(optarg, "help") ||
+				   !strcmp(optarg, "list")) {
+				printf("differs: *xbdiff xrabdiff\n");
+				exit(0);
+			} else {
+				warnx("unknown differ \"%s\"", optarg);
+				usage(EXIT_FAILURE);
+			}
 		case 'u':
 			/* for compatibility */
 			break;
@@ -456,6 +519,9 @@ main(int argc, char *argv[])
 		}
 	}
 	unc_set_debug(NULL, verbose > 1);
+
+	if (!differ)
+		differ = &xbdiff;
 
 	for (; optind < argc; optind++) {
 		int x;

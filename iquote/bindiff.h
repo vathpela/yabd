@@ -38,6 +38,7 @@ extern int verbose;
 #include "math.h"
 #include "time.h"
 #include "tty.h"
+#include "diffapi.h"
 
 #endif /* !BINDIFF_H_ */
 // vim:fenc=utf-8:tw=75:noet
