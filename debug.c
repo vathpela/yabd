@@ -39,7 +39,7 @@ dprintc(int c)
 	if (isprint(c) || c == '\t' || c == '\n')
 		rc = dprintf("%c", c);
 	else
-		rc = dprintf("\\%03hho", c);
+		rc = dprintf("\\%03hho", (unsigned char)c);
 	return rc;
 }
 
